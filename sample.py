@@ -39,11 +39,11 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
     return logits
 
 # Parts from: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py
-def sample(prompt, model, tokenizer, temperature, top_k, top_p, repetition_penalty):
+def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty):
     input_ids = torch.tensor(tokenizer.encode(prompt)).unsqueeze(0).to(device)
 
     with torch.no_grad():
-        for _ in tqdm(range(30)):
+        for _ in tqdm(range(length)):
             logits, _ = model(input_ids)
 
             logits = logits[0, -1]        
@@ -69,7 +69,7 @@ def sample(prompt, model, tokenizer, temperature, top_k, top_p, repetition_penal
 
         print(f'Generated: {out}')
 
-def main(checkpoint='ctrl', temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
+def main(checkpoint='ctrl', length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
 
     tokenizer = CTRLTokenizer.from_pretrained(checkpoint)
     model = CTRLLMHeadModel.from_pretrained(checkpoint).to(device)
@@ -77,11 +77,9 @@ def main(checkpoint='ctrl', temperature=0, top_k=0, top_p=0, repetition_penalty=
     while True:
         try:
             prompt = input('prompt > ')
-            sample(prompt, model, tokenizer, temperature, top_k, top_p, repetition_penalty)
+            sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty)
         except KeyboardInterrupt:
-            break        
-
-
+            break
 
 if __name__ == '__main__':
     fire.Fire(main)
