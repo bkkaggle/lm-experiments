@@ -13,7 +13,7 @@ class DummyModel(nn.Module):
     def forward(self, x, labels):
         x = self.linear(x)
 
-        loss = F.cross_entropy(x, torch.argmax(labels, dim=-1).view(-1).long())
+        loss = F.cross_entropy(x, torch.argmax(labels, dim=-1).view(-1))
 
         return (loss, x)
 
