@@ -91,10 +91,13 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
                     writer.add_scalar('learning_rate', scheduler.get_lr()[0], global_step)
 
                 if global_step % histogram_steps == 0:
-                    for name, param in model.named_parameters():
-                        writer.add_histogram(f'{name}', param, global_step, bins='sqrt')
-                        if param.grad is not None:
-                            writer.add_histogram(f'{name}.grad', param.grad, global_step, bins='sqrt')
+                    try:
+                        for name, param in model.named_parameters():
+                            writer.add_histogram(f'{name}', param, global_step, bins='sqrt')
+                            if param.grad is not None:
+                                writer.add_histogram(f'{name}.grad', param.grad, global_step, bins='sqrt')
+                    except:
+                        print('Error logging histograms')
 
                 if accelerator == 'GPU':
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
