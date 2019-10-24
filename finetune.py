@@ -1,5 +1,4 @@
 import fire
-import glob
 import pickle
 import mlcrate as mlc
 
@@ -15,34 +14,11 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import CTRLLMHeadModel, CTRLTokenizer, AdamW, WarmupLinearSchedule
 
 from dataset import TextDataset
+from model import DummyModel
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def preprocess(path, control_code, save_file="processed_dataset.pkl", checkpoint="ctrl", seq_len=256, subset=False):
-    tokenizer = CTRLTokenizer.from_pretrained(checkpoint)
-
-    batches = []
-    paths = glob.glob(f"{path}/*.txt")
-
-    for path in paths:
-        with open(path, encoding="utf-8") as file:
-            text = file.read()
-
-        if subset:
-            text = text[:10000]
-
-        # Remove extra spaces that cause errors when tokenizing
-        text = " ".join(text.split())
-
-        tokenized_text = tokenizer.encode(text)
-
-        for i in tqdm(range(0, len(tokenized_text) - seq_len + 1, seq_len), total=int(len(tokenized_text) / seq_len),):
-            batches.append(tokenizer.encode(control_code) + tokenized_text[i: i + seq_len])
-
-    with open(save_file, "wb") as handle:
-        pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-def finetune(checkpoint='ctrl', train_path='./processed_dataset.pkl', learning_rate=1e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, histogram_interval=100, fp16=True, subset=False):
+def finetune(checkpoint='ctrl', train_path='./processed_dataset.pkl', learning_rate=1e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, histogram_interval=100, fp16=False, subset=False):
     timer = mlc.time.Timer()
     writer = SummaryWriter()
 
@@ -57,19 +33,7 @@ def finetune(checkpoint='ctrl', train_path='./processed_dataset.pkl', learning_r
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     if subset:
-        class Model(nn.Module):
-            def __init__(self):
-                super(Model, self).__init__()
-            
-                self.linear = nn.Linear(256, 1)
-            def forward(self, x, labels):
-                x = self.linear(x)
-
-                loss = F.cross_entropy(x.view(-1, 256), labels.view(-1, 256))
-
-                return (loss, x)
-
-        model = Model().to(device)
+        model = DummyModel().to(device)
     else:
         model = CTRLLMHeadModel.from_pretrained(checkpoint).to(device)
 
@@ -83,7 +47,7 @@ def finetune(checkpoint='ctrl', train_path='./processed_dataset.pkl', learning_r
     optimizer = AdamW(optimizer_grouped_parameters, lr=learning_rate, eps=1e-8)
     scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(0.1 * train_steps), t_total=train_steps)
 
-    if fp16:
+    if fp16 == True:
         from apex import amp
 
         model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
@@ -99,8 +63,7 @@ def finetune(checkpoint='ctrl', train_path='./processed_dataset.pkl', learning_r
             inputs, labels = batch.to(device), batch.to(device)
 
             out = model(inputs, labels=labels)
-
-
+            loss, out = out[:2]
 
 
 
