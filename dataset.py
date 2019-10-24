@@ -14,4 +14,4 @@ class TextDataset(Dataset):
         return len(self.batches)
 
     def __getitem__(self, index):
-        return torch.tensor(self.batches[index]).float()
+        return torch.tensor(self.batches[index])

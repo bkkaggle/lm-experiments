@@ -72,7 +72,7 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
 
         model.train()
         for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / batch_size / gradient_accumulation_steps)):
-            inputs, labels = batch.to(device), batch.long().to(device)
+            inputs, labels = batch.to(device), batch.to(device)
 
             out = model(inputs, labels=labels)
             loss, out = out[:2]
