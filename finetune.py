@@ -14,6 +14,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 from transformers import CTRLLMHeadModel, CTRLTokenizer
 
+
 def preprocess(
     path,
     control_code,
@@ -27,8 +28,22 @@ def preprocess(
     examples = []
     paths = glob.glob(f"{path}/*.txt")
 
+
+def preprocess(
+    path,
+    control_code,
+    save_file="processed_dataset.pkl",
+    checkpoint="ctrl",
+    seq_len=256,
+    subset=False,
+):
+    tokenizer = CTRLTokenizer.from_pretrained(checkpoint)
+
+    batches = []
+    paths = glob.glob(f"{path}/*.txt")
+
     for path in paths:
-        with open(path, encoding='utf-8') as file:
+        with open(path, encoding="utf-8") as file:
             text = file.read()
 
         if subset:
@@ -39,7 +54,6 @@ def preprocess(
 
         tokenized_text = tokenizer.encode(text)
 
-        batches = []
         for i in tqdm(
             range(0, len(tokenized_text) - seq_len + 1, seq_len),
             total=int(len(tokenized_text) / seq_len),
@@ -47,11 +61,9 @@ def preprocess(
             batches.append(
                 tokenizer.encode(control_code) + tokenized_text[i : i + seq_len]
             )
-            if i == 5:
-                break
 
-        with open(save_path, "wb") as handle:
-            pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(save_file, "wb") as handle:
+        pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
