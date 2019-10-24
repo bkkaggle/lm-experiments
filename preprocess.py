@@ -10,14 +10,7 @@ import torch
 from transformers import CTRLTokenizer
 
 
-def preprocess(
-    path,
-    control_code,
-    save_file="processed_dataset.pkl",
-    checkpoint="ctrl",
-    seq_len=256,
-    subset=False,
-):
+def preprocess(path, control_code, save_file="processed_dataset.pkl", checkpoint="ctrl", seq_len=256, subset=False):
     tokenizer = CTRLTokenizer.from_pretrained(checkpoint)
 
     control_code_len = len(tokenizer.encode(control_code))
@@ -43,7 +36,7 @@ def preprocess(
             total=int(len(tokenized_text) / seq_len),
         ):
             batches.append(
-                tokenizer.encode(control_code) + tokenized_text[i : i + seq_len]
+                tokenizer.encode(control_code) + tokenized_text[i: i + seq_len]
             )
 
     with open(save_file, "wb") as handle:

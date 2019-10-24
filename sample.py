@@ -8,6 +8,8 @@ from transformers import CTRLTokenizer, CTRLLMHeadModel
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # From: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py#L79
+
+
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")):
     """ Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
         Args:
