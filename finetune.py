@@ -62,8 +62,8 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
     optimizer = AdamW(optimizer_grouped_parameters, lr=learning_rate, eps=1e-8)
     scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(0.1 * train_steps), t_total=train_steps)
 
-    if accelerator == 'GPU':
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
+    # if accelerator == 'GPU':
+    #     model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
 
     global_step = 0
 
@@ -79,11 +79,12 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
 
             loss = loss / gradient_accumulation_steps
 
-            if accelerator == 'GPU':
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                loss.backward()
+            # if accelerator == 'GPU':
+            #     with amp.scale_loss(loss, optimizer) as scaled_loss:
+            #         scaled_loss.backward()
+            # else:
+            #     loss.backward()
+            loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
                 if global_step % logging_steps == 0:
@@ -99,10 +100,11 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
                     except:
                         print('Error logging histograms')
 
-                if accelerator == 'GPU':
-                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
-                else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                # if accelerator == 'GPU':
+                #     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
+                # else:
+                #     torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
 
                 if accelerator == 'TPU':
