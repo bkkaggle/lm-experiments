@@ -8,8 +8,6 @@ from transformers import CTRLTokenizer, CTRLLMHeadModel
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # From: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py#L79
-
-
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")):
     """ Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
         Args:
@@ -19,9 +17,7 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")
                 Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
         From: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
     """
-    assert (
-        logits.dim() == 1
-    )  # batch size 1 for now - could be updated for more but the code would be less clear
+    assert (logits.dim() == 1) # batch size 1 for now - could be updated for more but the code would be less clear
     top_k = min(top_k, logits.size(-1))  # Safety check
     if top_k > 0:
         # Remove all tokens with a probability less than the last token of the top-k
@@ -42,11 +38,8 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")
         logits[indices_to_remove] = filter_value
     return logits
 
-
 # Parts from: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py
-def sample(
-    prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty
-):
+def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty):
     input_ids = torch.tensor(tokenizer.encode(prompt)).unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -79,34 +72,16 @@ def sample(
         print(f"Generated: {out}")
 
 
-def main(
-    checkpoint="ctrl",
-    length=100,
-    temperature=0,
-    top_k=0,
-    top_p=0,
-    repetition_penalty=1.2,
-):
-
+def main(checkpoint="ctrl", length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
     tokenizer = CTRLTokenizer.from_pretrained(checkpoint)
     model = CTRLLMHeadModel.from_pretrained(checkpoint).to(device)
 
     while True:
         try:
             prompt = input("prompt > ")
-            sample(
-                prompt,
-                model,
-                tokenizer,
-                length,
-                temperature,
-                top_k,
-                top_p,
-                repetition_penalty,
-            )
+            sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty)
         except KeyboardInterrupt:
             break
-
 
 if __name__ == "__main__":
     fire.Fire(main)

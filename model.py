@@ -1,7 +1,8 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 
 class DummyModel(nn.Module):
     def __init__(self):
@@ -15,3 +16,7 @@ class DummyModel(nn.Module):
         loss = F.cross_entropy(x, torch.argmax(labels, dim=-1).view(-1).long())
 
         return (loss, x)
+
+    def save_pretrained(self, dir):
+        filename = os.path.join(dir, "checkpoint.pt")
+        torch.save(self.state_dict(), filename)
