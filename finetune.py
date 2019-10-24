@@ -1,7 +1,6 @@
 import os
 import fire
 import pickle
-import mlcrate as mlc
 
 import numpy as np
 from tqdm import tqdm
