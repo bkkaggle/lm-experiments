@@ -33,7 +33,7 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
         from apex import amp
 
     elif accelerator == 'CPU':
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")
 
     writer = SummaryWriter()
 
