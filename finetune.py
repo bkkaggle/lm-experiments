@@ -11,12 +11,12 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from transformers import CTRLLMHeadModel, CTRLTokenizer, AdamW, WarmupLinearSchedule
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSchedule
 
 from dataset import TextDataset
 from model import DummyModel
 
-def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='./checkpoints', learning_rate=1e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
+def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='./checkpoints', learning_rate=1e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -50,7 +50,7 @@ def finetune(checkpoint="ctrl", train_path="./processed_dataset.pkl", save_dir='
     if subset:
         model = DummyModel().to(device)
     else:
-        model = CTRLLMHeadModel.from_pretrained(checkpoint).to(device)
+        model = GPT2LMHeadModel.from_pretrained(checkpoint).to(device)
 
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [

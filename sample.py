@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 import torch
-from transformers import CTRLTokenizer, CTRLLMHeadModel
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -72,9 +72,9 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
         print(f"Generated: {out}")
 
 
-def main(checkpoint="ctrl", length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
-    tokenizer = CTRLTokenizer.from_pretrained(checkpoint)
-    model = CTRLLMHeadModel.from_pretrained(checkpoint).to(device)
+def main(checkpoint="gpt2", length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
+    tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
+    model = GPT2LMHeadModel.from_pretrained(checkpoint).to(device)
 
     while True:
         try:
