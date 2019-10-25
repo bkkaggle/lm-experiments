@@ -10,7 +10,7 @@ import torch
 from transformers import GPT2Tokenizer
 
 # def preprocess( path, control_code, save_file="processed_dataset.pkl", checkpoint="ctrl", seq_len=256, subset=False):
-def preprocess(path, save_file="processed_dataset.pkl", checkpoint="ctrl", seq_len=256, subset=False):
+def preprocess(path, save_file="processed_dataset.pkl", checkpoint="gpt2", seq_len=256, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
 
     # control_code_len = len(tokenizer.encode(control_code))
