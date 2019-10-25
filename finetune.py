@@ -52,6 +52,8 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
     else:
         model = GPT2LMHeadModel.from_pretrained(checkpoint).to(device)
 
+    tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
+
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
         {"params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], "weight_decay": 0.0},
@@ -117,6 +119,8 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
 
         model.to('cpu')
         model.save_pretrained(save_dir)
+        tokenizer.save_pretrained(save_dir)
+
         model.to(device)
 
 if __name__ == "__main__":
