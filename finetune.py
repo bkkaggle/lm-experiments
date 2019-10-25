@@ -16,7 +16,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSche
 from dataset import TextDataset
 from model import DummyModel
 
-def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='./checkpoints', learning_rate=1e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
+def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
