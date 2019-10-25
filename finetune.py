@@ -116,7 +116,8 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
                 global_step += 1
 
         model.to('cpu')
-        model.save_pretrained(save_dir)        
+        model.save_pretrained(save_dir)
+        model.to(device)
 
 if __name__ == "__main__":
     fire.Fire()
