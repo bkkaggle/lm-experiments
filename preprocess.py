@@ -1,3 +1,4 @@
+import os
 import fire
 import glob
 import pickle
@@ -9,11 +10,11 @@ import torch
 
 from transformers import GPT2Tokenizer
 
-def preprocess(path, name="moby", checkpoint="gpt2", seq_len=256, val_size=0.1, subset=False):
+def preprocess(data_folder, save_path, name="moby", checkpoint="gpt2", seq_len=256, val_size=0.1, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
 
     batches = []
-    paths = glob.glob(f"{path}/*.txt")
+    paths = glob.glob(f"{data_folder}/*.txt")
 
     for path in paths:
         with open(path, encoding="utf-8") as file:
@@ -34,10 +35,10 @@ def preprocess(path, name="moby", checkpoint="gpt2", seq_len=256, val_size=0.1, 
     train_batches = batches[:train_len]
     val_batches = batches[train_len:]
 
-    with open(f'{name}_data_train.pkl', "wb") as handle:
+    with open(os.path.join(save_path, f'{name}_data_train.pkl'), "wb") as handle:
         pickle.dump(train_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    with open(f'{name}_data_val.pkl', "wb") as handle:
+    with open(os.path.join(save_path, f'{name}_data_val.pkl'), "wb") as handle:
         pickle.dump(val_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
