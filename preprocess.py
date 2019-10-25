@@ -9,12 +9,8 @@ import torch
 
 from transformers import GPT2Tokenizer
 
-# def preprocess( path, control_code, save_file="processed_dataset.pkl", checkpoint="ctrl", seq_len=256, subset=False):
-def preprocess(path, save_file="processed_dataset.pkl", checkpoint="gpt2", seq_len=256, subset=False):
+def preprocess(path, name="moby", checkpoint="gpt2", seq_len=256, val_size=0.1, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
-
-    # control_code_len = len(tokenizer.encode(control_code))
-    # seq_len -= control_code_len
 
     batches = []
     paths = glob.glob(f"{path}/*.txt")
@@ -32,11 +28,17 @@ def preprocess(path, save_file="processed_dataset.pkl", checkpoint="gpt2", seq_l
         tokenized_text = tokenizer.encode(text)
 
         for i in tqdm(range(0, len(tokenized_text) - seq_len + 1, seq_len), total=int(len(tokenized_text) / seq_len),):
-            # batches.append(tokenizer.encode(control_code) + tokenized_text[i : i + seq_len])
             batches.append(tokenized_text[i : i + seq_len])
 
-    with open(save_file, "wb") as handle:
-        pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    train_len = int(len(batches) * (1 - val_size))
+    train_batches = batches[:train_len]
+    val_batches = batches[train_len:]
+
+    with open(f'{name}_data_train.pkl', "wb") as handle:
+        pickle.dump(train_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with open(f'{name}_data_val.pkl', "wb") as handle:
+        pickle.dump(val_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire(preprocess)
