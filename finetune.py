@@ -141,10 +141,16 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
         train_loss /= (i + 1)
         val_loss /= (j + 1)
 
+        train_perplexity = torch.exp(torch.tensor(train_loss))
+        val_perplexity = torch.exp(torch.tensor(val_loss))
+
         writer.add_scalar("train_epoch_loss", train_loss, epoch)
         writer.add_scalar("val_epoch_loss", val_loss, epoch)
 
-        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss}'
+        writer.add_scalar("train_epoch_perplexity", train_perplexity, epoch)
+        writer.add_scalar("val_epoch_perplexity", val_perplexity, epoch)
+
+        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss} | Train perplexity: {train_perplexity} | Val perplexity: {val_perplexity}'
         print(message)
 
         model.to('cpu')
