@@ -16,7 +16,10 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSche
 from dataset import TextDataset
 from model import DummyModel
 
-def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
+# validation
+# logging to stdout
+
+def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -45,7 +48,10 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
     writer.add_text("Histogram interval", str(histogram_steps), 0)
 
     train_dataset = TextDataset(train_path)
+    val_dataset = TextDataset(val_path)
+
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     if subset:
         model = DummyModel().to(device)
@@ -69,17 +75,22 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
 
     global_step = 0
 
+    train_loss = 0
+    val_loss = 0
+
     for epoch in range(epochs):
         print(f"Epoch: {epoch}")
 
         model.train()
-        for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / batch_size / gradient_accumulation_steps)):
+        for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / batch_size)):
             inputs, labels = batch.to(device), batch.to(device)
 
             out = model(inputs, labels=labels)
-            loss, out = out[:2]
+            loss = out[0]
 
             loss = loss / gradient_accumulation_steps
+
+            train_loss += loss.item()
 
             if accelerator == 'GPU':
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -117,6 +128,25 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
 
                 global_step += 1
 
+        model.eval()
+        with torch.no_grad():
+            for j, batch in tqdm(enumerate(val_dataloader), total=int(len(val_dataset) / batch_size)):
+                inputs, labels = batch.to(device), batch.to(device)
+
+                out = model(inputs, labels=labels)
+                loss = out[0]
+
+                val_loss += loss.item()
+
+        train_loss /= (i + 1)
+        val_loss /= (j + 1)
+
+        writer.add_scalar("train_epoch_loss", train_loss, epoch)
+        writer.add_scalar("val_epoch_loss", val_loss, epoch)
+
+        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss}'
+        print(message)
+
         model.to('cpu')
         model.save_pretrained(save_dir)
         tokenizer.save_pretrained(save_dir)
@@ -124,4 +154,4 @@ def finetune(checkpoint="gpt2", train_path="./processed_dataset.pkl", save_dir='
         model.to(device)
 
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire(finetune)

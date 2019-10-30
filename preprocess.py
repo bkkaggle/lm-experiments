@@ -1,4 +1,5 @@
 import os
+import random
 import fire
 import glob
 import pickle
@@ -30,6 +31,8 @@ def preprocess(data_folder, save_path, name="moby", checkpoint="gpt2", seq_len=2
 
         for i in tqdm(range(0, len(tokenized_text) - seq_len + 1, seq_len), total=int(len(tokenized_text) / seq_len),):
             batches.append(tokenized_text[i : i + seq_len])
+
+    random.shuffle(batches)
 
     train_len = int(len(batches) * (1 - val_size))
     train_batches = batches[:train_len]
