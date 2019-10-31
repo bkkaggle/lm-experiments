@@ -16,8 +16,8 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSche
 from dataset import TextDataset
 from model import DummyModel
 
-# validation
-# logging to stdout
+# w&b
+# larger dataset
 
 def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
 
