@@ -18,10 +18,10 @@ from model import DummyModel
 
 # larger dataset
 
-# import wandb
-# wandb.init(project="transformer-experiments")
+import wandb
+wandb.init(project="transformer-experiments")
 
-def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir='wandb.run.dir', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
 
     print(f'Save dir: {save_dir}')
 
@@ -39,11 +39,11 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
     elif accelerator == 'CPU':
         device = torch.device("cpu")
 
-    # wandb.config.checkpoint = checkpoint
-    # wandb.config.learning_rate = learning_rate
-    # wandb.config.batch_size = batch_size
-    # wandb.config.epochs = epochs
-    # wandb.config.gradient_accumulation_steps = gradient_accumulation_steps
+    wandb.config.checkpoint = checkpoint
+    wandb.config.learning_rate = learning_rate
+    wandb.config.batch_size = batch_size
+    wandb.config.epochs = epochs
+    wandb.config.gradient_accumulation_steps = gradient_accumulation_steps
 
     train_dataset = TextDataset(train_path)
     val_dataset = TextDataset(val_path)
@@ -71,7 +71,7 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
     if accelerator == 'GPU':
         model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
 
-    # wandb.watch(model, log='all')
+    wandb.watch(model, log='all')
 
     global_step = 0
 
@@ -99,8 +99,8 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
                 loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
-                # if global_step % logging_steps == 0:
-                #     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
+                if global_step % logging_steps == 0:
+                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
 
                 if accelerator == 'GPU':
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
@@ -134,7 +134,7 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
         train_perplexity = torch.exp(torch.tensor(train_loss))
         val_perplexity = torch.exp(torch.tensor(val_loss))
 
-        # wandb.log({"train_epoch_loss": train_loss, "val_epoch_loss": val_loss, "train_epoch_perplexity": train_perplexity, "val_epoch_perplexity": val_perplexity}, step=epoch)
+        wandb.log({"train_epoch_loss": train_loss, "val_epoch_loss": val_loss, "train_epoch_perplexity": train_perplexity, "val_epoch_perplexity": val_perplexity}, step=epoch)
 
         message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss} | Train perplexity: {train_perplexity} | Val perplexity: {val_perplexity}'
         print(message)
