@@ -21,7 +21,7 @@ from model import DummyModel
 # import wandb
 # wandb.init(project="transformer-experiments")
 
-def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir='wandb.run.dir', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
 
     print(f'Save dir: {save_dir}')
 
