@@ -16,13 +16,14 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSche
 from dataset import TextDataset
 from model import DummyModel
 
-# w&b
 # larger dataset
 
-def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
+import wandb
+wandb.init(project="transformer-experiments")
 
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_path="./data/moby_data_val.pkl", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+
+    print(f'Save dir: {save_dir}')
 
     if accelerator == 'TPU':
         import torch_xla.core.xla_model as xm
@@ -38,14 +39,11 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
     elif accelerator == 'CPU':
         device = torch.device("cpu")
 
-    writer = SummaryWriter()
-
-    writer.add_text("Checkpoint", checkpoint, 0)
-    writer.add_text("Learning rate", str(learning_rate), 0)
-    writer.add_text("Batch size", str(batch_size), 0)
-    writer.add_text("Epochs", str(epochs), 0)
-    writer.add_text("Gradient accumulation steps", str(gradient_accumulation_steps), 0)
-    writer.add_text("Histogram interval", str(histogram_steps), 0)
+    wandb.config.checkpoint = checkpoint
+    wandb.config.learning_rate = learning_rate
+    wandb.config.batch_size = batch_size
+    wandb.config.epochs = epochs
+    wandb.config.gradient_accumulation_steps = gradient_accumulation_steps
 
     train_dataset = TextDataset(train_path)
     val_dataset = TextDataset(val_path)
@@ -72,6 +70,8 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
 
     if accelerator == 'GPU':
         model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
+
+    wandb.watch(model, log='all')
 
     global_step = 0
 
@@ -100,17 +100,7 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
 
             if (i + 1) % gradient_accumulation_steps == 0:
                 if global_step % logging_steps == 0:
-                    writer.add_scalar("train_loss", loss.item(), global_step)
-                    writer.add_scalar('learning_rate', scheduler.get_lr()[0], global_step)
-
-                if global_step % histogram_steps == 0:
-                    try:
-                        for name, param in model.named_parameters():
-                            writer.add_histogram(f'{name}', param, global_step, bins='sqrt')
-                            if param.grad is not None:
-                                writer.add_histogram(f'{name}.grad', param.grad, global_step, bins='sqrt')
-                    except:
-                        print('Error logging histograms')
+                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
 
                 if accelerator == 'GPU':
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
@@ -144,11 +134,7 @@ def finetune(checkpoint="gpt2", train_path="./data/moby_data_train.pkl", val_pat
         train_perplexity = torch.exp(torch.tensor(train_loss))
         val_perplexity = torch.exp(torch.tensor(val_loss))
 
-        writer.add_scalar("train_epoch_loss", train_loss, epoch)
-        writer.add_scalar("val_epoch_loss", val_loss, epoch)
-
-        writer.add_scalar("train_epoch_perplexity", train_perplexity, epoch)
-        writer.add_scalar("val_epoch_perplexity", val_perplexity, epoch)
+        wandb.log({"train_epoch_loss": train_loss, "val_epoch_loss": val_loss, "train_epoch_perplexity": train_perplexity, "val_epoch_perplexity": val_perplexity}, step=epoch)
 
         message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss} | Train perplexity: {train_perplexity} | Val perplexity: {val_perplexity}'
         print(message)
