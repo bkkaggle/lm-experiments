@@ -83,6 +83,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
 
         model.train()
         for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / batch_size)):
+            print(i)
             inputs, labels = batch.to(device), batch.to(device)
 
             out = model(inputs, labels=labels)
@@ -99,6 +100,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
                 loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
+                print('step')
                 if global_step % logging_steps == 0:
                     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
 
@@ -108,7 +110,9 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
                 if accelerator == 'TPU':
+                    print('optimize start')
                     xm.optimizer_step(optimizer, barrier=True)
+                    print('optimize end')
                 else:
                     optimizer.step()
     
@@ -117,6 +121,11 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
                 optimizer.zero_grad()
 
                 global_step += 1
+
+                print('step stop')
+
+
+        print('training done')
 
         model.eval()
         with torch.no_grad():
