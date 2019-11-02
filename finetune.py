@@ -88,9 +88,9 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
             out = model(inputs, labels=labels)
             loss = out[0]
 
-            # loss = loss / gradient_accumulation_steps
+            loss = loss / gradient_accumulation_steps
 
-            # train_loss += loss.item()
+            train_loss += loss.item()
 
             if accelerator == 'GPU':
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -99,13 +99,13 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
                 loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
-                # if global_step % logging_steps == 0:
-                #     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
+                if global_step % logging_steps == 0:
+                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
 
-                # if accelerator == 'GPU':
-                #     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
-                # else:
-                #     torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                if accelerator == 'GPU':
+                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
+                else:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
                 if accelerator == 'TPU':
                     xm.optimizer_step(optimizer, barrier=True)
