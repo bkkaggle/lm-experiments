@@ -83,10 +83,11 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
 
         model.train()
         for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / batch_size)):
+            if i == 99:
+                print(i)
             inputs, labels = batch.to(device), batch.to(device)
 
             if i == 99:
-                print(i)
                 print(inputs.shape)
                 print(labels.shape)
 
@@ -101,7 +102,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
             if i == 99:
                 print('loss div')
 
-            train_loss += loss.item()
+            # train_loss += loss.item()
 
             if i == 99:
                 print('train loss added')
