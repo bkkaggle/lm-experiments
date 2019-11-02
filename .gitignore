@@ -4,3 +4,4 @@ __pycache__
 runs
 checkpoints/*
 wandb
+data/imdb
