@@ -99,8 +99,8 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
                 loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
-                if global_step % logging_steps == 0:
-                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
+                # if global_step % logging_steps == 0:
+                #     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
 
                 if accelerator == 'GPU':
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
