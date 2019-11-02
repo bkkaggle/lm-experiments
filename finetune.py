@@ -83,38 +83,20 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
 
         model.train()
         for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / batch_size)):
-            if i == 99:
-                print(i)
             inputs, labels = batch.to(device), batch.to(device)
-
-            if i == 99:
-                print(inputs.shape)
-                print(labels.shape)
 
             out = model(inputs, labels=labels)
             loss = out[0]
 
-            if i == 99:
-                print('out model')
-
             loss = loss / gradient_accumulation_steps
 
-            if i == 99:
-                print('loss div')
-
-            # train_loss += loss.item()
-
-            if i == 99:
-                print('train loss added')
+            train_loss += loss.item()
 
             if accelerator == 'GPU':
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
                 loss.backward()
-
-            if i == 99:
-                print('loss backward')
 
             if (i + 1) % gradient_accumulation_steps == 0:
                 if global_step % logging_steps == 0:
