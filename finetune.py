@@ -48,7 +48,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, le
     train_dataset = TextDataset(train_path)
     val_dataset = TextDataset(val_path)
 
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     if subset:
