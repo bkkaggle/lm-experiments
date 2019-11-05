@@ -21,9 +21,10 @@ from model import DummyModel
 import wandb
 wandb.init(project="transformer-experiments")
 
-def finetune(train_path, val_path, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
 
-    print(f'Save dir: {save_dir}')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     if accelerator == 'TPU':
         import torch_xla.core.xla_model as xm
