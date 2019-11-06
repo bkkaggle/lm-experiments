@@ -135,7 +135,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', 
         train_perplexity = torch.exp(torch.tensor(train_loss))
         val_perplexity = torch.exp(torch.tensor(val_loss))
 
-        wandb.log({"val_epoch_loss": val_loss, "train_epoch_perplexity": train_perplexity, "val_epoch_perplexity": val_perplexity}, step=i)
+        wandb.log({"val_epoch_loss": val_loss, "train_epoch_perplexity": train_perplexity, "val_epoch_perplexity": val_perplexity})
 
         message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss} | Train perplexity: {train_perplexity} | Val perplexity: {val_perplexity}'
         print(message)
