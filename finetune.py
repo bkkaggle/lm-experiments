@@ -21,7 +21,7 @@ from model import DummyModel
 import wandb
 wandb.init(project="transformer-experiments")
 
-def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+def finetune(train_path, checkpoint="gpt2", save_dir='./checkpoints', learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -47,10 +47,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', 
     wandb.config.gradient_accumulation_steps = gradient_accumulation_steps
 
     train_dataset = TextDataset(train_path)
-    val_dataset = TextDataset(val_path)
-
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     if subset:
         model = DummyModel().to(device)
@@ -76,10 +73,9 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', 
 
     global_step = 0
 
-    train_loss = 0
-    val_loss = 0
-
     for epoch in range(epochs):
+        train_loss = 0
+
         print(f"Epoch: {epoch}")
 
         model.train()
@@ -101,7 +97,7 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', 
 
             if (i + 1) % gradient_accumulation_steps == 0:
                 if global_step % logging_steps == 0:
-                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]})
+                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
                 if accelerator == 'GPU':
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
@@ -119,25 +115,12 @@ def finetune(train_path, val_path, checkpoint="gpt2", save_dir='./checkpoints', 
 
                 global_step += 1
 
-        model.eval()
-        with torch.no_grad():
-            for j, batch in tqdm(enumerate(val_dataloader), total=int(len(val_dataset) / batch_size)):
-                inputs, labels = batch.to(device), batch.to(device)
-
-                out = model(inputs, labels=labels)
-                loss = out[0]
-
-                val_loss += loss.item()
-
         train_loss /= (i + 1)
-        val_loss /= (j + 1)
-
         train_perplexity = torch.exp(torch.tensor(train_loss))
-        val_perplexity = torch.exp(torch.tensor(val_loss))
 
-        wandb.log({"val_epoch_loss": val_loss, "train_epoch_perplexity": train_perplexity, "val_epoch_perplexity": val_perplexity})
+        wandb.log({"train_epoch_loss": train_loss, "train_epoch_perplexity": train_perplexity}, step=global_step)
 
-        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Val loss: {val_loss} | Train perplexity: {train_perplexity} | Val perplexity: {val_perplexity}'
+        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
         print(message)
 
         model.to('cpu')
