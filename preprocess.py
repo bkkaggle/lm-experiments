@@ -21,7 +21,7 @@ def imdb(path, save_dir):
         with open(os.path.join(save_dir, f'review_{i}.txt'), 'w') as f:
             f.write(review)
 
-def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, val_size=0.1, subset=False):
+def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
 
     batches = []
@@ -44,15 +44,8 @@ def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, val
 
     random.shuffle(batches)
 
-    train_len = int(len(batches) * (1 - val_size))
-    train_batches = batches[:train_len]
-    val_batches = batches[train_len:]
-
-    with open(os.path.join(save_path, f'{name}_data_train.pkl'), "wb") as handle:
-        pickle.dump(train_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    with open(os.path.join(save_path, f'{name}_data_val.pkl'), "wb") as handle:
-        pickle.dump(val_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(os.path.join(save_path, f'{name}_data.pkl'), "wb") as handle:
+        pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
     fire.Fire()
