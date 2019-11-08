@@ -70,13 +70,14 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
         print(f"Generated: {out}")
 
 
-def main(checkpoint="gpt2", length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
+def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
     model = GPT2LMHeadModel.from_pretrained(checkpoint).to(device)
 
     while True:
         try:
-            prompt = input("prompt > ")
+            if prompt == None:
+                prompt = input("prompt > ")
             sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty)
         except KeyboardInterrupt:
             break
