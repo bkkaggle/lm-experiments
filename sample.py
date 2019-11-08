@@ -79,6 +79,9 @@ def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top
             if prompt == None:
                 prompt = input("prompt > ")
             sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty)
+
+            if prompt != None:
+                break
         except KeyboardInterrupt:
             break
 
