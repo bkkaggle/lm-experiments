@@ -22,7 +22,6 @@ def imdb(path, save_dir):
             f.write(review)
 
 def starwars(path, save_dir):
-
     paths = glob.glob(f"{path}/*.txt")
 
     i = 0
@@ -32,11 +31,14 @@ def starwars(path, save_dir):
 
         lines = starwars['dialogue'].values
 
+        script = ''
         for _, line in tqdm(enumerate(lines), total=len(lines)):
-            with open(os.path.join(save_dir, f'line_{i}.txt'), 'w') as f:
-                f.write(line)
+            script += ' ' + line
 
-            i += 1
+        with open(os.path.join(save_dir, f'starwars_{i}.txt'), 'w') as f:
+            f.write(script)
+
+        i += 1
 
 def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
