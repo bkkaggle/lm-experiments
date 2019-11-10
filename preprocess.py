@@ -21,6 +21,23 @@ def imdb(path, save_dir):
         with open(os.path.join(save_dir, f'review_{i}.txt'), 'w') as f:
             f.write(review)
 
+def starwars(path, save_dir):
+
+    paths = glob.glob(f"{path}/*.txt")
+
+    i = 0
+    for path in paths:        
+        # From: https://www.kaggle.com/xvivancos/star-wars-movie-scripts/discussion/58113
+        starwars = pd.read_table(path, delim_whitespace=True, header=0, escapechar='\\')
+
+        lines = starwars['dialogue'].values
+
+        for _, line in tqdm(enumerate(lines), total=len(lines)):
+            with open(os.path.join(save_dir, f'line_{i}.txt'), 'w') as f:
+                f.write(line)
+
+            i += 1
+
 def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
 

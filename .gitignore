@@ -4,3 +4,4 @@ runs
 checkpoints/*
 wandb
 data/imdb
+data/starwars
