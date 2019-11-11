@@ -75,7 +75,7 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
     if accelerator == 'GPU':
         model, optimizer = amp.initialize(model, optimizer, opt_level="O1", loss_scale="dynamic") # Scale loss must be 1.0 for wandb gradient logging to be accurate
 
-    wandb.watch(model, log='all')
+    wandb.watch(model, log='parameters')
 
     global_step = 0
 
@@ -119,6 +119,11 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                 if global_step % logging_steps == 0:
                     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
+                    # params = amp.master_params(optimizer)
+                    for name, param in model.named_parameters():
+                        if param.grad is not None:
+                            wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())})
+    
                 global_step += 1
 
         train_loss /= (i + 1) * gradient_accumulation_steps
