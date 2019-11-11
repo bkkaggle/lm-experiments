@@ -91,9 +91,6 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
             out = model(inputs, labels=labels)
             loss = out[0]
 
-            if global_step % logging_steps == 0:
-                wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
-
             loss = loss / gradient_accumulation_steps
 
             train_loss += loss.item()
@@ -118,6 +115,9 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                 scheduler.step()
 
                 optimizer.zero_grad()
+
+                if global_step % logging_steps == 0:
+                    wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
                 global_step += 1
 
