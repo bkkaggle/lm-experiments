@@ -49,6 +49,8 @@ def finetune(train_path, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rat
     train_dataset = TextDataset(train_path)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
+    print(f'len dataset: {len(train_dataset)}')
+
     if subset:
         model = DummyModel().to(device)
     else:
