@@ -21,7 +21,7 @@ from model import DummyModel
 import wandb
 wandb.init(project="transformer-experiments")
 
-def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -117,13 +117,13 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                 if global_step % logging_steps == 0:
                     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
-                    # params = amp.master_params(optimizer)
-                    for name, param in model.named_parameters():
-                        if param.grad is not None:
-                            try:
-                                wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())})
-                            except:
-                                continue
+                    if global_step & histogram_steps == 0:
+                        for name, param in model.named_parameters():
+                            if param.grad is not None:
+                                try:
+                                    wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())}, step=global_step)
+                                except:
+                                    pass
 
                 optimizer.zero_grad()
     
