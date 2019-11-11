@@ -73,13 +73,12 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
     scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(0.1 * train_steps), t_total=train_steps)
 
     if accelerator == 'GPU':
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1", loss_scale="dynamic") # Scale loss must be 1.0 for wandb gradient logging to be accurate
+        model, optimizer = amp.initialize(model, optimizer, opt_level="O1", loss_scale="dynamic")
 
     wandb.watch(model, log='parameters')
 
     global_step = 0
-
-    to_log = {}
+    gradients = {}
 
     for epoch in range(epochs):
         train_loss = 0
@@ -123,12 +122,11 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                         for name, param in model.named_parameters():
                             if param.grad is not None:
                                 try:
-                                    to_log[f"gradients/{name}"] = wandb.Histogram(param.grad.detach().cpu().numpy())
+                                    gradients[f"gradients/{name}"] = wandb.Histogram(param.grad.detach().cpu().numpy())
                                 except:
                                     pass
-                        # wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())}, step=global_step)
-                    wandb.log(to_log, step=global_step)
-
+                    
+                    wandb.log(gradients, step=global_step)
 
                 optimizer.zero_grad()
     
