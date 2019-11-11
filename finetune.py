@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSchedule
 
-from dataset import TextDataset
+from dataset import TextDataset, MultiDataset
 from model import DummyModel
 
 # larger dataset
@@ -21,7 +21,7 @@ from model import DummyModel
 import wandb
 wandb.init(project="transformer-experiments")
 
-def finetune(train_path, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
+def finetune(dataset_1_path, dataset_2_path=None, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -46,7 +46,11 @@ def finetune(train_path, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rat
     wandb.config.epochs = epochs
     wandb.config.gradient_accumulation_steps = gradient_accumulation_steps
 
-    train_dataset = TextDataset(train_path)
+    if dataset_2_path:
+        train_dataset = MultiDataset(dataset_1_path, dataset_2_path)
+    else:
+        train_dataset = TextDataset(dataset_1_path)
+
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     print(f'len dataset: {len(train_dataset)}')
