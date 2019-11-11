@@ -98,7 +98,11 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
 
             train_loss += loss.item()
 
-            loss.backward()
+            if accelerator == 'GPU':
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
