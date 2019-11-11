@@ -79,6 +79,8 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
 
     global_step = 0
 
+    to_log = {}
+
     for epoch in range(epochs):
         train_loss = 0
 
@@ -117,7 +119,6 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                 if global_step % logging_steps == 0:
                     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
-                    to_log = {}
                     if global_step & histogram_steps == 0:
                         for name, param in model.named_parameters():
                             if param.grad is not None:
