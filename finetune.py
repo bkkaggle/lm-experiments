@@ -121,7 +121,7 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
 
                 global_step += 1
 
-        train_loss /= (i + 1)
+        train_loss /= (i + 1) * gradient_accumulation_steps
         train_perplexity = torch.exp(torch.tensor(train_loss))
 
         wandb.log({"train_epoch_loss": train_loss, "train_epoch_perplexity": train_perplexity}, step=global_step)

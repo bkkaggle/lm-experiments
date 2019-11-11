@@ -30,7 +30,7 @@ class MultiDataset(Dataset):
         with open(dataset_2_path, "rb") as handle:
             dataset_2_batches = pickle.load(handle)
 
-        dataset_2_batches = np.repeat(dataset_1_batches, dataset_1_supersampling)
+        [batch for batch in dataset_1_batches for i in range(dataset_1_supersampling)]
 
         print(f'dataset 1 supersampling: {dataset_1_supersampling}')
         print(f'dataset 1 len: {len(dataset_1_batches)}')
