@@ -117,13 +117,17 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                 if global_step % logging_steps == 0:
                     wandb.log({"train_loss": loss.item(), "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
+                    to_log = {}
                     if global_step & histogram_steps == 0:
                         for name, param in model.named_parameters():
                             if param.grad is not None:
                                 try:
-                                    wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())}, step=global_step)
+                                    to_log[f"gradients/{name}"] = wandb.Histogram(param.grad.detach().cpu().numpy())
                                 except:
                                     pass
+                        # wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())}, step=global_step)
+                    wandb.log(to_log, step=global_step)
+
 
                 optimizer.zero_grad()
     
