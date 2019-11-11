@@ -20,7 +20,7 @@ class TextDataset(Dataset):
         return torch.tensor(self.batches[index])
 
 class MultiDataset(Dataset):
-    def __init__(self, dataset_1_path, dataset_2_path):
+    def __init__(self, dataset_1_path, dataset_2_path, dataset_1_supersampling):
         dataset_1_batches = []
         dataset_2_batches = []
 
@@ -30,8 +30,9 @@ class MultiDataset(Dataset):
         with open(dataset_2_path, "rb") as handle:
             dataset_2_batches = pickle.load(handle)
 
-        dataset_2_batches = np.repeat(dataset_2_batches, 30)
+        dataset_2_batches = np.repeat(dataset_1_batches, dataset_1_supersampling)
 
+        print(f'dataset 1 supersampling: {dataset_1_supersampling}')
         print(f'dataset 1 len: {len(dataset_1_batches)}')
         print(f'dataset 2 len: {len(dataset_2_batches)}')
 
