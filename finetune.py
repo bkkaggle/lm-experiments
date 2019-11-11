@@ -120,7 +120,10 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                     # params = amp.master_params(optimizer)
                     for name, param in model.named_parameters():
                         if param.grad is not None:
-                            wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())})
+                            try:
+                                wandb.log({f"gradients/{name}": wandb.Histogram(param.grad.detach().cpu().numpy())})
+                            except:
+                                continue
 
                 optimizer.zero_grad()
     
