@@ -73,7 +73,7 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
     scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(0.1 * train_steps), t_total=train_steps)
 
     if accelerator == 'GPU':
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O3", keep_batchnorm_fp32=True)
+        model, optimizer = amp.initialize(model, optimizer, opt_level="O3", keep_batchnorm_fp32=True, loss_scale="dynamic")
 
     wandb.watch(model, log='all')
 
