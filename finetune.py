@@ -73,7 +73,7 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
     scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(0.1 * train_steps), t_total=train_steps)
 
     if accelerator == 'GPU':
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O3", keep_batchnorm_fp32=True, loss_scale="dynamic")
+        model, optimizer = amp.initialize(model, optimizer, opt_level="O1", loss_scale=1.0)
 
     wandb.watch(model, log='all')
 
@@ -105,7 +105,10 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
                 loss.backward()
 
             if (i + 1) % gradient_accumulation_steps == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                if accelerator == 'GPU':
+                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1)
+                else:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
                 if accelerator == 'TPU':
                     xm.optimizer_step(optimizer, barrier=True)
