@@ -67,7 +67,7 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
 
         out = tokenizer.decode(input_ids.view(-1).tolist())
 
-        print(f"Generated: {out}")
+        return out
 
 
 def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
@@ -78,7 +78,8 @@ def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top
         try:
             if prompt == None:
                 prompt = input("prompt > ")
-            sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty)
+            out = sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty)
+            print(f"Generated: {out}")
 
             if prompt != None:
                 break
