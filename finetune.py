@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, WarmupLinearSchedule
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, get_linear_schedule_with_warmup
 
 from dataset import TextDataset, MultiDataset
 from model import DummyModel
@@ -70,7 +70,7 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
 
     train_steps = int(len(train_dataloader) / gradient_accumulation_steps * epochs)
     optimizer = AdamW(optimizer_grouped_parameters, lr=learning_rate, eps=1e-8)
-    scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(0.1 * train_steps), t_total=train_steps)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(0.1 * train_steps), num_training_steps=train_steps)
 
     if accelerator == 'GPU':
         model, optimizer = amp.initialize(model, optimizer, opt_level="O1", loss_scale="dynamic")
