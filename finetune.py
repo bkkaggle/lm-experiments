@@ -147,8 +147,10 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
 
         model.to(device)
 
-        print('Sampling from model:')
-        sample(" ", model, tokenizer, length=256, temperature=1, top_k=0, top_p=0.9, repetition_penalty=1.2)
+        print('Sampling from model:\n')
+        for _ in range(5):
+            sample(" ", model, tokenizer, length=256, temperature=1, top_k=0, top_p=0.9, repetition_penalty=1.2)
+            print('\n')
 
 if __name__ == "__main__":
     fire.Fire(finetune)
