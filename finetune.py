@@ -15,6 +15,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, get_linear_sched
 
 from dataset import TextDataset, MultiDataset
 from model import DummyModel
+from sample import sample
 
 # log examples; https://docs.wandb.com/library/python/log
 
@@ -139,6 +140,9 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
 
         message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
         print(message)
+
+        print('Sampling from model:')
+        sample(" ", model, tokenizer, length=256, temperature=1, top_p=0.9, repetition_penalty=1.2)
 
         model.to('cpu')
         model.save_pretrained(save_dir)
