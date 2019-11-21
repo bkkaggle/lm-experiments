@@ -142,7 +142,7 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
         print(message)
 
         print('Sampling from model:')
-        sample(" ", model, tokenizer, length=256, temperature=1, top_p=0.9, repetition_penalty=1.2)
+        sample(" ", model, tokenizer, length=256, temperature=1, top_k=0, top_p=0.9, repetition_penalty=1.2)
 
         model.to('cpu')
         model.save_pretrained(save_dir)
