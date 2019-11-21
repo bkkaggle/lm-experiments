@@ -61,7 +61,7 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
                 next_token = torch.argmax(logits).unsqueeze(0)
             # Top-k or top-p
             else:
-                next_token = torch.multinomial(torch.softmax(logits, dim=-1), num_samples=1)
+                next_token = torch.multinomial(torch.softmax(logits.float(), dim=-1), num_samples=1)
 
             input_ids = torch.cat([input_ids, next_token.view(1, 1)], dim=1)
 
