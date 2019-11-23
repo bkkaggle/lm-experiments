@@ -17,11 +17,10 @@ from dataset import TextDataset, MultiDataset
 from model import DummyModel
 from sample import sample
 
-# log examples; https://docs.wandb.com/library/python/log
-
 import wandb
 wandb.init(project="transformer-experiments")
 
+# work with gpt2 or ctrl automatically
 def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, checkpoint="gpt2", save_dir=wandb.run.dir, learning_rate=5e-5, batch_size=4, epochs=2, gradient_accumulation_steps=1, logging_steps=10, histogram_steps=100, accelerator='GPU', subset=False):
 
     if not os.path.exists(save_dir):
@@ -133,7 +132,8 @@ def finetune(dataset_1_path, dataset_2_path=None, dataset_1_supersampling=1, che
     
                 global_step += 1
 
-        train_loss /= (i + 1) * gradient_accumulation_steps
+        train_loss /= (i + 1)
+        train_loss *= gradient_accumulation_steps
         train_perplexity = torch.exp(torch.tensor(train_loss))
 
         wandb.log({"train_epoch_loss": train_loss, "train_epoch_perplexity": train_perplexity}, step=global_step)
