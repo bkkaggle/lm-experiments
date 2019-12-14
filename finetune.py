@@ -155,20 +155,21 @@ def finetune(**kwargs):
 
                 global_step += 1
 
-            if global_step % config.save_steps == 0:
-                print(f'Saving model at global step: {global_step}')
-                checkpoint_dir = os.path.join(
-                    config.save_dir, f'checkpoint-{global_step}')
+                # Must be in grad_accum block b/c if it is > 0, the model will get saved multiple times
+                if global_step % config.save_steps == 0:
+                    print(f'Saving model at global step: {global_step}')
+                    checkpoint_dir = os.path.join(
+                        config.save_dir, f'checkpoint-{global_step}')
 
-                if not os.path.exists(checkpoint_dir):
-                    os.makedirs(checkpoint_dir)
+                    if not os.path.exists(checkpoint_dir):
+                        os.makedirs(checkpoint_dir)
 
-                model.save_pretrained(checkpoint_dir)
-                tokenizer.save_pretrained(checkpoint_dir)
-                torch.save(optimizer.state_dict(), os.path.join(
-                    checkpoint_dir, 'optimizer.pt'))
-                torch.save(scheduler.state_dict(), os.path.join(
-                    checkpoint_dir, 'scheduler.pt'))
+                    model.save_pretrained(checkpoint_dir)
+                    tokenizer.save_pretrained(checkpoint_dir)
+                    torch.save(optimizer.state_dict(), os.path.join(
+                        checkpoint_dir, 'optimizer.pt'))
+                    torch.save(scheduler.state_dict(), os.path.join(
+                        checkpoint_dir, 'scheduler.pt'))
 
         train_loss /= (i + 1)
         train_loss *= config.gradient_accumulation_steps
