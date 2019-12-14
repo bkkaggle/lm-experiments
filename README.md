@@ -14,6 +14,9 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   on the fly tokenization
     -   update other files
 -   multi gpu/machine training
+-   pplm
+-   ctrl finetuning
+-   t5
 
 # Done
 

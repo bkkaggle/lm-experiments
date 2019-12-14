@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from transformers import AutoModel, AutoTokenizer, AdamW, get_linear_schedule_with_warmup
+from transformers import GPT2LMHeadModel, CTRLLMHeadModel, AutoTokenizer, AdamW, get_linear_schedule_with_warmup
 
 from dataset import TextDataset
 from model import DummyModel
@@ -21,6 +21,11 @@ from config import Config
 
 import wandb
 wandb.init(project="transformer-experiments")
+
+models = {
+    'gpt2': GPT2LMHeadModel,
+    'ctrl': CTRLLMHeadModel
+}
 
 
 def finetune(**kwargs):
@@ -46,7 +51,8 @@ def finetune(**kwargs):
     if config.subset:
         model = DummyModel().to(device)
     else:
-        model = AutoModel.from_pretrained(config.checkpoint).to(device)
+        model = models[config.model].from_pretrained(
+            config.checkpoint).to(device)
 
     tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
 
