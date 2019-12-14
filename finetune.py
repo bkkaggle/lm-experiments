@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, get_linear_schedule_with_warmup
+from transformers import AutoModel, AutoTokenizer, AdamW, get_linear_schedule_with_warmup
 
 from dataset import TextDataset
 from model import DummyModel
@@ -46,9 +46,9 @@ def finetune(**kwargs):
     if config.subset:
         model = DummyModel().to(device)
     else:
-        model = GPT2LMHeadModel.from_pretrained(config.checkpoint).to(device)
+        model = AutoModel.from_pretrained(config.checkpoint).to(device)
 
-    tokenizer = GPT2Tokenizer.from_pretrained(config.checkpoint)
+    tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
 
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [

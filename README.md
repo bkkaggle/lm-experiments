@@ -6,16 +6,16 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 -   tpu stuff works; seems like each core has 64/8=8gb of ram; only 117M with a batch size of 8 works in about 20m/epoch
 
--   work with gpt2 or ctrl automatically
+# ToDo
 
--   on the fly tokenization
--   take out multiple datasets
--   multi gpu/machine training
+-   work with gpt2 or ctrl automatically
 -   saving and resuming
 -   use past
-
-# ToDo
+-   on the fly tokenization
+    -   update other files
+-   multi gpu/machine training
 
 # Done
 
 -   use config files
+-   take out multiple datasets
