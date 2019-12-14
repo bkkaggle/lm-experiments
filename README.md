@@ -8,8 +8,6 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   save_steps
--   saving and resuming
 -   use past
 -   on the fly tokenization
     -   update other files
@@ -23,5 +21,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   use config files
 -   take out multiple datasets
 -   work with gpt2 or ctrl automatically
+-   save_steps
+-   saving and resuming
 
 code from huggingface/transformers
