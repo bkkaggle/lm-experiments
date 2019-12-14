@@ -70,22 +70,44 @@ def finetune(**kwargs):
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
         0.1 * train_steps), num_training_steps=train_steps)
 
+    if config.checkpoint not in models.keys():
+        print('Loading optimizer and scheduler')
+
+        optimizer.load_state_dict(torch.load(
+            os.path.join(config.checkpoint, 'optimizer.pt')))
+        scheduler.load_state_dict(torch.load(
+            os.path.join(config.checkpoint, 'scheduler.pt')))
+
     if config.accelerator == 'GPU':
         model, optimizer = amp.initialize(
             model, optimizer, opt_level="O1", loss_scale="dynamic")
 
     wandb.watch(model, log='parameters')
 
-    global_step = 0
     gradients = {}
 
-    for epoch in range(config.epochs):
+    global_step = 0
+    epochs_trained = 0
+    steps_trained_in_current_epoch = 0
+    if config.checkpoint not in models.keys():
+        global_step = int(config.checkpoint.split('-')[-1].split('/')[0])
+
+        epochs_trained = global_step // (len(train_dataloader) //
+                                         config.gradient_accumulation_steps)
+        steps_trained_in_current_epoch = global_step % (
+            len(train_dataloader) // config.gradient_accumulation_steps)
+
+    for epoch in range(epochs_trained, config.epochs):
         train_loss = 0
 
         print(f"Epoch: {epoch}")
 
         model.train()
         for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / config.batch_size)):
+            if steps_trained_in_current_epoch > 0:
+                steps_trained_in_current_epoch -= 1
+                continue
+
             inputs, labels = batch.to(device), batch.to(device)
 
             out = model(inputs, labels=labels)
@@ -134,6 +156,20 @@ def finetune(**kwargs):
 
                 global_step += 1
 
+            if global_step % config.save_steps == 0:
+                checkpoint_dir = os.path.join(
+                    config.save_dir, f'checkpoint-{global_step}')
+
+                if not os.path.exists(checkpoint_dir):
+                    os.makedirs(checkpoint_dir)
+
+                model.save_pretrained(checkpoint_dir)
+                tokenizer.save_pretrained(checkpoint_dir)
+                torch.save(optimizer.state_dict(), os.path.join(
+                    checkpoint_dir, 'optimizer.pt'))
+                torch.save(scheduler.state_dict(), os.path.join(
+                    checkpoint_dir, 'scheduler.pt'))
+
         train_loss /= (i + 1)
         train_loss *= config.gradient_accumulation_steps
         train_perplexity = torch.exp(torch.tensor(train_loss))
@@ -143,12 +179,6 @@ def finetune(**kwargs):
 
         message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
         print(message)
-
-        model.to('cpu')
-        model.save_pretrained(config.save_dir)
-        tokenizer.save_pretrained(config.save_dir)
-
-        model.to(device)
 
         print('Sampling from model:\n')
         for _ in range(config.n_samples):

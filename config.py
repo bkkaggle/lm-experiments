@@ -23,6 +23,7 @@ class Config(object):
 
         self.logging_steps = kwargs.get('logging_steps', 10)
         self.histogram_steps = kwargs.get('histogram_steps', 100)
+        self.save_steps = kwargs.get('save_steps', 100)
 
         self.n_samples = kwargs.get('n_samples', 1)
         self.sample_len = kwargs.get('sample_len', 256)
@@ -43,6 +44,7 @@ class Config(object):
         wandb.config.subset = self.subset
         wandb.config.logging_steps = self.logging_steps
         wandb.config.histogram_steps = self.histogram_steps
+        wandb.config.save_steps = self.save_steps
         wandb.config.n_samples = self.n_samples
         wandb.config.sample_len = self.sample_len
         wandb.config.sample_len = self.sample_len
