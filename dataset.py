@@ -9,37 +9,11 @@ from torch.utils.data import Dataset
 
 
 class TextDataset(Dataset):
-    def __init__(self, preprocessed_path):
-        with open(preprocessed_path, "rb") as handle:
+    def __init__(self, dataset_path):
+        with open(dataset_path, "rb") as handle:
             self.batches = pickle.load(handle)
 
-    def __len__(self):
-        return len(self.batches)
-
-    def __getitem__(self, index):
-        return torch.tensor(self.batches[index])
-
-class MultiDataset(Dataset):
-    def __init__(self, dataset_1_path, dataset_2_path, dataset_1_supersampling):
-        dataset_1_batches = []
-        dataset_2_batches = []
-
-        with open(dataset_1_path, "rb") as handle:
-            dataset_1_batches = pickle.load(handle)
-
-        with open(dataset_2_path, "rb") as handle:
-            dataset_2_batches = pickle.load(handle)
-
-        dataset_1_batches = [batch for batch in dataset_1_batches for i in range(dataset_1_supersampling)]
-
-        print(f'dataset 1 supersampling: {dataset_1_supersampling}')
-        print(f'dataset 1 len: {len(dataset_1_batches)}')
-        print(f'dataset 2 len: {len(dataset_2_batches)}')
-
-        batches = dataset_1_batches + dataset_2_batches
-        random.shuffle(batches)
-
-        self.batches = batches
+        print(f'Dataset length: {len(self.batches)}')
 
     def __len__(self):
         return len(self.batches)

@@ -12,6 +12,7 @@ import torch
 
 from transformers import GPT2Tokenizer
 
+
 def imdb(path, save_dir):
     imdb = pd.read_csv(path)
 
@@ -21,13 +22,15 @@ def imdb(path, save_dir):
         with open(os.path.join(save_dir, f'review_{i}.txt'), 'w') as f:
             f.write(review)
 
+
 def starwars(path, save_dir):
     paths = glob.glob(f"{path}/*.txt")
 
     i = 0
-    for path in paths:        
+    for path in paths:
         # From: https://www.kaggle.com/xvivancos/star-wars-movie-scripts/discussion/58113
-        starwars = pd.read_table(path, delim_whitespace=True, header=0, escapechar='\\')
+        starwars = pd.read_table(
+            path, delim_whitespace=True, header=0, escapechar='\\')
 
         lines = starwars['dialogue'].values
 
@@ -39,6 +42,7 @@ def starwars(path, save_dir):
             f.write(script)
 
         i += 1
+
 
 def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
@@ -59,12 +63,13 @@ def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, sub
         tokenized_text = tokenizer.encode(text)
 
         for i in range(0, len(tokenized_text) - seq_len + 1, seq_len):
-            batches.append(tokenized_text[i : i + seq_len])
+            batches.append(tokenized_text[i: i + seq_len])
 
     random.shuffle(batches)
 
     with open(os.path.join(save_path, f'{name}_data.pkl'), "wb") as handle:
         pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 if __name__ == "__main__":
     fire.Fire()
