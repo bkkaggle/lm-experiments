@@ -12,6 +12,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   take out multiple datasets
 -   multi gpu/machine training
 -   saving and resuming
+-   use past
 
 # ToDo
 

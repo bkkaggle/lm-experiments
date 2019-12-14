@@ -50,106 +50,106 @@ def finetune(**kwargs):
 
     tokenizer = GPT2Tokenizer.from_pretrained(config.checkpoint)
 
-    # no_decay = ["bias", "LayerNorm.weight"]
-    # optimizer_grouped_parameters = [
-    #     {"params": [p for n, p in model.named_parameters() if not any(
-    #         nd in n for nd in no_decay)], "weight_decay": 0.0},
-    #     {"params": [p for n, p in model.named_parameters() if any(
-    #         nd in n for nd in no_decay)], "weight_decay": 0.0},
-    # ]
+    no_decay = ["bias", "LayerNorm.weight"]
+    optimizer_grouped_parameters = [
+        {"params": [p for n, p in model.named_parameters() if not any(
+            nd in n for nd in no_decay)], "weight_decay": 0.0},
+        {"params": [p for n, p in model.named_parameters() if any(
+            nd in n for nd in no_decay)], "weight_decay": 0.0},
+    ]
 
-    # train_steps = int(len(train_dataloader) /
-    #                   config.gradient_accumulation_steps * config.epochs)
-    # optimizer = AdamW(optimizer_grouped_parameters, lr=config.lr, eps=1e-8)
-    # scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
-    #     0.1 * train_steps), num_training_steps=train_steps)
+    train_steps = int(len(train_dataloader) /
+                      config.gradient_accumulation_steps * config.epochs)
+    optimizer = AdamW(optimizer_grouped_parameters, lr=config.lr, eps=1e-8)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
+        0.1 * train_steps), num_training_steps=train_steps)
 
-    # if config.accelerator == 'GPU':
-    #     model, optimizer = amp.initialize(
-    #         model, optimizer, opt_level="O1", loss_scale="dynamic")
+    if config.accelerator == 'GPU':
+        model, optimizer = amp.initialize(
+            model, optimizer, opt_level="O1", loss_scale="dynamic")
 
-    # wandb.watch(model, log='parameters')
+    wandb.watch(model, log='parameters')
 
-    # global_step = 0
-    # gradients = {}
+    global_step = 0
+    gradients = {}
 
-    # for epoch in range(config.epochs):
-    #     train_loss = 0
+    for epoch in range(config.epochs):
+        train_loss = 0
 
-    #     print(f"Epoch: {epoch}")
+        print(f"Epoch: {epoch}")
 
-    #     model.train()
-    #     for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / config.batch_size)):
-    #         inputs, labels = batch.to(device), batch.to(device)
+        model.train()
+        for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / config.batch_size)):
+            inputs, labels = batch.to(device), batch.to(device)
 
-    #         out = model(inputs, labels=labels)
-    #         loss = out[0]
+            out = model(inputs, labels=labels)
+            loss = out[0]
 
-    #         loss = loss / config.gradient_accumulation_steps
+            loss = loss / config.gradient_accumulation_steps
 
-    #         train_loss += loss.item()
+            train_loss += loss.item()
 
-    #         if config.accelerator == 'GPU':
-    #             with amp.scale_loss(loss, optimizer) as scaled_loss:
-    #                 scaled_loss.backward()
-    #         else:
-    #             loss.backward()
+            if config.accelerator == 'GPU':
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
 
-    #         if (i + 1) % config.gradient_accumulation_steps == 0:
-    #             if config.accelerator == 'GPU':
-    #                 torch.nn.utils.clip_grad_norm_(
-    #                     amp.master_params(optimizer), 1)
-    #             else:
-    #                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+            if (i + 1) % config.gradient_accumulation_steps == 0:
+                if config.accelerator == 'GPU':
+                    torch.nn.utils.clip_grad_norm_(
+                        amp.master_params(optimizer), 1)
+                else:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
-    #             if config.accelerator == 'TPU':
-    #                 xm.optimizer_step(optimizer, barrier=True)
-    #             else:
-    #                 optimizer.step()
+                if config.accelerator == 'TPU':
+                    xm.optimizer_step(optimizer, barrier=True)
+                else:
+                    optimizer.step()
 
-    #             scheduler.step()
+                scheduler.step()
 
-    #             if global_step % config.logging_steps == 0:
-    #                 wandb.log({"train_loss": loss.item() * config.gradient_accumulation_steps,
-    #                            "learning_rate": scheduler.get_lr()[0]}, step=global_step)
+                if global_step % config.logging_steps == 0:
+                    wandb.log({"train_loss": loss.item() * config.gradient_accumulation_steps,
+                               "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
-    #                 if global_step % config.histogram_steps == 0:
-    #                     for name, param in model.named_parameters():
-    #                         if param.grad is not None:
-    #                             try:
-    #                                 gradients[f"gradients/{name}"] = wandb.Histogram(
-    #                                     param.grad.detach().cpu().numpy())
-    #                             except:
-    #                                 pass
+                    if global_step % config.histogram_steps == 0:
+                        for name, param in model.named_parameters():
+                            if param.grad is not None:
+                                try:
+                                    gradients[f"gradients/{name}"] = wandb.Histogram(
+                                        param.grad.detach().cpu().numpy())
+                                except:
+                                    pass
 
-    #                 wandb.log(gradients, step=global_step)
+                    wandb.log(gradients, step=global_step)
 
-    #             optimizer.zero_grad()
+                optimizer.zero_grad()
 
-    #             global_step += 1
+                global_step += 1
 
-    #     train_loss /= (i + 1)
-    #     train_loss *= config.gradient_accumulation_steps
-    #     train_perplexity = torch.exp(torch.tensor(train_loss))
+        train_loss /= (i + 1)
+        train_loss *= config.gradient_accumulation_steps
+        train_perplexity = torch.exp(torch.tensor(train_loss))
 
-    #     wandb.log({"train_epoch_loss": train_loss,
-    #                "train_epoch_perplexity": train_perplexity}, step=global_step)
+        wandb.log({"train_epoch_loss": train_loss,
+                   "train_epoch_perplexity": train_perplexity}, step=global_step)
 
-    #     message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
-    #     print(message)
+        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
+        print(message)
 
-    #     model.to('cpu')
-    #     model.save_pretrained(config.save_dir)
-    #     tokenizer.save_pretrained(config.save_dir)
+        model.to('cpu')
+        model.save_pretrained(config.save_dir)
+        tokenizer.save_pretrained(config.save_dir)
 
-    #     model.to(device)
+        model.to(device)
 
-    print('Sampling from model:\n')
-    for _ in range(config.n_samples):
-        out = sample(" ", model, tokenizer, length=config.sample_len, temperature=config.temperature,
-                     top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty)
-        print(out)
-        print('\n')
+        print('Sampling from model:\n')
+        for _ in range(config.n_samples):
+            out = sample(" ", model, tokenizer, length=config.sample_len, temperature=config.temperature,
+                         top_k=config.top_k, top_p=config.top_p, repetition_penalty=config)
+            print(out)
+            print('\n')
 
 
 if __name__ == "__main__":
