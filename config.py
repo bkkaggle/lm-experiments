@@ -19,8 +19,6 @@ class Config(object):
 
         self.accelerator = kwargs.get('accelerator', 'GPU')
 
-        self.subset = kwargs.get('subset', False)
-
         self.logging_steps = kwargs.get('logging_steps', 10)
         self.histogram_steps = kwargs.get('histogram_steps', 100)
         self.save_steps = kwargs.get('save_steps', 100)
@@ -41,7 +39,6 @@ class Config(object):
         wandb.config.gradient_accumulation_steps = self.gradient_accumulation_steps
         wandb.config.epochs = self.epochs
         wandb.config.accelerator = self.accelerator
-        wandb.config.subset = self.subset
         wandb.config.logging_steps = self.logging_steps
         wandb.config.histogram_steps = self.histogram_steps
         wandb.config.save_steps = self.save_steps

@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from transformers import GPT2LMHeadModel, CTRLLMHeadModel, AutoTokenizer, AdamW, get_linear_schedule_with_warmup
+from transformers import GPT2LMHeadModel, CTRLLMHeadModel, GPT2Tokenizer, CTRLTokenizer, AdamW, get_linear_schedule_with_warmup
 
 from dataset import TextDataset
 from model import DummyModel
@@ -22,9 +22,10 @@ from config import Config
 import wandb
 wandb.init(project="transformer-experiments")
 
-models = {
-    'gpt2': GPT2LMHeadModel,
-    'ctrl': CTRLLMHeadModel
+MODEL_CLASSES = {
+    'gpt2': (GPT2LMHeadModel, GPT2Tokenizer),
+    'ctrl': (CTRLLMHeadModel, CTRLTokenizer),
+    'test': (DummyModel(), GPT2Tokenizer)
 }
 
 
@@ -48,13 +49,11 @@ def finetune(**kwargs):
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
 
-    if config.subset:
-        model = DummyModel().to(device)
-    else:
-        model = models[config.model].from_pretrained(
-            config.checkpoint).to(device)
+    model, tokenizer = MODEL_CLASSES[config.model]
 
-    tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
+    if config.model != 'test':
+        model = model.from_pretrained(config.checkpoint).to(device)
+    tokenizer = tokenizer.from_pretrained(config.checkpoint)
 
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -70,7 +69,7 @@ def finetune(**kwargs):
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
         0.1 * train_steps), num_training_steps=train_steps)
 
-    if config.checkpoint not in models.keys():
+    if config.checkpoint not in MODEL_CLASSES.keys():
         print('Loading optimizer and scheduler')
 
         optimizer.load_state_dict(torch.load(
@@ -89,7 +88,7 @@ def finetune(**kwargs):
     global_step = 0
     epochs_trained = 0
     steps_trained_in_current_epoch = 0
-    if config.checkpoint not in models.keys():
+    if config.checkpoint not in MODEL_CLASSES.keys():
         global_step = int(config.checkpoint.split('-')[-1].split('/')[0])
 
         epochs_trained = global_step // (len(train_dataloader) //
@@ -157,6 +156,7 @@ def finetune(**kwargs):
                 global_step += 1
 
             if global_step % config.save_steps == 0:
+                print(f'Saving model at global step: {global_step}')
                 checkpoint_dir = os.path.join(
                     config.save_dir, f'checkpoint-{global_step}')
 
@@ -183,7 +183,7 @@ def finetune(**kwargs):
         print('Sampling from model:\n')
         for _ in range(config.n_samples):
             out = sample(" ", model, tokenizer, length=config.sample_len, temperature=config.temperature,
-                         top_k=config.top_k, top_p=config.top_p, repetition_penalty=config)
+                         top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty)
             print(out)
             print('\n')
 
