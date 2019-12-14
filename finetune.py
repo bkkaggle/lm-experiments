@@ -94,7 +94,7 @@ def finetune(**kwargs):
         epochs_trained = global_step // (len(train_dataloader) //
                                          config.gradient_accumulation_steps)
         steps_trained_in_current_epoch = global_step % (
-            len(train_dataloader) // config.gradient_accumulation_steps)
+            len(train_dataloader) // config.gradient_accumulation_steps) * config.gradient_accumulation_steps
 
     for epoch in range(epochs_trained, config.epochs):
         train_loss = 0
