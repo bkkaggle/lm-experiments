@@ -48,18 +48,19 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")
 
 
 def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty):
-    input_ids = torch.tensor(tokenizer.encode(prompt)).unsqueeze(0).to(device)
+    next_token = torch.tensor(tokenizer.encode(prompt)).unsqueeze(0).to(device)
+    generated = next_token
 
     past = None
     with torch.no_grad():
         for _ in tqdm(range(length)):
-            logits, past = model(input_ids, past=past)
+            logits, past = model(next_token, past=past)
 
             logits = logits[0, -1]
             logits /= temperature if temperature > 0 else 1
 
             # Repetition penalty
-            for i in set(input_ids.view(-1).tolist()):
+            for i in set(generated.view(-1).tolist()):
                 logits[i] /= repetition_penalty
 
             # Top-k or top-p
@@ -73,9 +74,9 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
                 next_token = torch.multinomial(torch.softmax(
                     logits.float(), dim=-1), num_samples=1)
 
-            input_ids = torch.cat([input_ids, next_token.view(1, 1)], dim=1)
+            generated = torch.cat([generated, next_token.view(1, 1)], dim=1)
 
-        out = tokenizer.decode(input_ids.view(-1).tolist())
+        out = tokenizer.decode(generated.view(-1).tolist())
 
         return out
 
