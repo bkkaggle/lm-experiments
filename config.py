@@ -32,6 +32,11 @@ class Config(object):
 
         self.debug = kwargs.get('debug', False)
 
+        # Preprocessing config vars
+        self.dataset_name = kwargs.get('dataset_name', None)
+        self.seq_len = kwargs.get('seq_len', 256)
+        self.control_code = kwargs.get('control_code', None)
+
         wandb.config.dataset_path = self.dataset_path
         wandb.config.save_dir = self.save_dir
         wandb.config.model = self.model

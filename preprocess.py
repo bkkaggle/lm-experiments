@@ -10,7 +10,17 @@ from tqdm import tqdm
 
 import torch
 
-from transformers import GPT2Tokenizer
+import wandb
+from transformers import GPT2Tokenizer, CTRLTokenizer
+
+from config import Config
+
+wandb.init(project="transformer-experiments")
+
+TOKENIZER_CLASSES = {
+    'gpt2': GPT2Tokenizer,
+    'ctrl': CTRLTokenizer
+}
 
 
 def imdb(path, save_dir):
@@ -24,35 +34,42 @@ def imdb(path, save_dir):
             f.write(review)
 
 
-def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False, control_code=None):
-    tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
+def preprocess(**kwargs):
+    config = Config(**kwargs)
+
+    tokenizer = TOKENIZER_CLASSES[config.model].from_pretrained(
+        config.checkpoint)
 
     batches = []
-    paths = glob.glob(f"{data_folder}/*.txt")
+    paths = glob.glob(f"{config.dataset_path}/*.txt")
 
     for path in tqdm(paths, total=len(paths)):
         with open(path, encoding="utf-8") as file:
             text = file.read()
 
-        if subset:
-            text = text[:10000]
-
         # Remove extra spaces that cause errors when tokenizing
         text = " ".join(text.split())
 
-        if checkpoint == 'gpt2':
+        if config.checkpoint == 'gpt2':
             text = "<|endoftext|> " + text
-        elif checkpoint == 'ctrl':
-            text = control_code + " " + text
+        elif config.checkpoint == 'ctrl':
+            text = config.control_code + " " + text
 
         tokenized_text = tokenizer.encode(text)
 
-        for i in range(0, len(tokenized_text) - seq_len + 1, seq_len):
-            batches.append(tokenized_text[i: i + seq_len])
+        for i in range(0, len(tokenized_text) - config.seq_len + 1, config.seq_len):
+            batches.append(tokenized_text[i: i + config.seq_len])
 
     random.shuffle(batches)
 
-    with open(os.path.join(save_path, f'{name}_data.pkl'), "wb") as handle:
+    if config.control_code:
+        save_file = os.path.join(
+            config.dataset_path, f'{config.dataset_name}-{config.checkpoint}-{config.control_code}.pkl')
+    else:
+        save_file = os.path.join(
+            config.dataset_path, f'{config.dataset_name}-{config.checkpoint}.pkl')
+
+    with open(save_file, "wb") as handle:
         pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 

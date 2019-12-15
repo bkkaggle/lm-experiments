@@ -8,7 +8,6 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   distilgpt2
 -   named tensors
 -   multi gpu/machine training
 -   pplm
@@ -26,5 +25,8 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   on the fly tokenization - wait for rust tokenizer, or just use the current one
     -   special tokens
     -   update other files
+-   distilgpt2
 
-code from huggingface/transformers
+# Acknowledgements
+
+some code taken from huggingface/transformers
