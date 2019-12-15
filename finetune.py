@@ -77,7 +77,7 @@ def finetune(**kwargs):
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
         0.1 * train_steps), num_training_steps=train_steps)
 
-    if config.checkpoint not in MODEL_CLASSES.keys():
+    if os.path.exists(config.checkpoint):
         print('Loading optimizer and scheduler')
 
         optimizer.load_state_dict(torch.load(
@@ -96,7 +96,7 @@ def finetune(**kwargs):
     global_step = 0
     epochs_trained = 0
     steps_trained_in_current_epoch = 0
-    if config.checkpoint not in MODEL_CLASSES.keys():
+    if os.path.exists(config.checkpoint):
         global_step = int(config.checkpoint.split('-')[-1].split('/')[0])
 
         epochs_trained = global_step // (len(train_dataloader) //
