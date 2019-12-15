@@ -15,6 +15,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   pplm
 -   ctrl finetuning
 -   t5
+-   distilgpt2
 
 # Done
 

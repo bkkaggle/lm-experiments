@@ -30,6 +30,8 @@ class Config(object):
         self.top_p = kwargs.get('top_p', 0.9)
         self.repetition_penalty = kwargs.get('repetition_penalty', 1.2)
 
+        self.debug = kwargs.get('debug', False)
+
         wandb.config.dataset_path = self.dataset_path
         wandb.config.save_dir = self.save_dir
         wandb.config.model = self.model
@@ -49,6 +51,7 @@ class Config(object):
         wandb.config.top_k = self.top_k
         wandb.config.top_p = self.top_p
         wandb.config.repetition_penalty = self.repetition_penalty
+        wandb.config.debug = self.debug
 
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)

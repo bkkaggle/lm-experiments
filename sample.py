@@ -56,7 +56,7 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
         for _ in tqdm(range(length)):
             logits, past = model(next_token, past=past)
 
-            logits = logits[0, -1]
+            logits = logits.view(-1)
             logits /= temperature if temperature > 0 else 1
 
             # Repetition penalty
@@ -81,7 +81,15 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
         return out
 
 
-def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2):
+def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2, debug=False):
+    if debug:
+        import ptvsd
+
+        print("Waiting for debugger attach")
+        ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
+        ptvsd.wait_for_attach()
+        breakpoint()
+
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
     model = GPT2LMHeadModel.from_pretrained(checkpoint).to(device)
 

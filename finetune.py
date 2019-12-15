@@ -32,6 +32,14 @@ MODEL_CLASSES = {
 def finetune(**kwargs):
     config = Config(**kwargs)
 
+    if config.debug:
+        import ptvsd
+
+        print("Waiting for debugger attach")
+        ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
+        ptvsd.wait_for_attach()
+        breakpoint()
+
     if config.accelerator == 'TPU':
         import torch_xla.core.xla_model as xm
         device = xm.xla_device()
