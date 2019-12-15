@@ -18,33 +18,12 @@ def imdb(path, save_dir):
 
     reviews = imdb['review'].values
 
-    for i, review in tqdm(enumerate(reviews), total=len(reviews)):
-        with open(os.path.join(save_dir, f'review_{i}.txt'), 'w') as f:
+    with open(os.path.join(save_dir, 'imdb.txt'), 'w') as f:
+        for i, review in tqdm(enumerate(reviews), total=len(reviews)):
             f.write(review)
 
 
-def starwars(path, save_dir):
-    paths = glob.glob(f"{path}/*.txt")
-
-    i = 0
-    for path in paths:
-        # From: https://www.kaggle.com/xvivancos/star-wars-movie-scripts/discussion/58113
-        starwars = pd.read_table(
-            path, delim_whitespace=True, header=0, escapechar='\\')
-
-        lines = starwars['dialogue'].values
-
-        script = ''
-        for _, line in tqdm(enumerate(lines), total=len(lines)):
-            script += ' ' + line
-
-        with open(os.path.join(save_dir, f'starwars_{i}.txt'), 'w') as f:
-            f.write(script)
-
-        i += 1
-
-
-def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False):
+def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, subset=False, control_code=None):
     tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
 
     batches = []
@@ -59,6 +38,11 @@ def preprocess(data_folder, save_path, name, checkpoint="gpt2", seq_len=256, sub
 
         # Remove extra spaces that cause errors when tokenizing
         text = " ".join(text.split())
+
+        if checkpoint == 'gpt2':
+            text = "<|endoftext|> " + text
+        elif checkpoint == 'ctrl':
+            text = control_code + " " + text
 
         tokenized_text = tokenizer.encode(text)
 
