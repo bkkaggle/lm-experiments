@@ -17,6 +17,7 @@ def imdb(path, save_dir):
     imdb = pd.read_csv(path)
 
     reviews = imdb['review'].values
+    print(f'There are {len(reviews)} reviews')
 
     with open(os.path.join(save_dir, 'imdb.txt'), 'w') as f:
         for i, review in tqdm(enumerate(reviews), total=len(reviews)):
