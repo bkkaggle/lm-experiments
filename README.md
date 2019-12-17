@@ -8,6 +8,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
+-   profile code
 -   multi gpu/machine training
 -   tpu training
 -   pplm
@@ -28,6 +29,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   distilgpt2
 -   named tensors - too experimental for now
 -   batch generation
+-   hooks for activations - not worth it
 
 # Acknowledgements
 

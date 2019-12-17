@@ -30,169 +30,174 @@ MODEL_CLASSES = {
 
 
 def finetune(**kwargs):
-    config = Config(**kwargs)
 
-    if config.debug:
-        import ptvsd
+    with torch.autograd.profiler.profile(use_cuda=True, record_shapes=True) as prof:
+        config = Config(**kwargs)
 
-        print("Waiting for debugger attach")
-        ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
-        ptvsd.wait_for_attach()
-        breakpoint()
+        if config.debug:
+            import ptvsd
 
-    if config.accelerator == 'TPU':
-        import torch_xla.core.xla_model as xm
-        device = xm.xla_device()
+            print("Waiting for debugger attach")
+            ptvsd.enable_attach(address=('localhost', 5678),
+                                redirect_output=True)
+            ptvsd.wait_for_attach()
+            breakpoint()
 
-    elif config.accelerator == 'GPU':
-        device = torch.device(
-            "cuda:0" if torch.cuda.is_available() else "cpu")
+        if config.accelerator == 'TPU':
+            import torch_xla.core.xla_model as xm
+            device = xm.xla_device()
 
-        from apex import amp
+        elif config.accelerator == 'GPU':
+            device = torch.device(
+                "cuda:0" if torch.cuda.is_available() else "cpu")
 
-    elif config.accelerator == 'CPU':
-        device = torch.device("cpu")
+            from apex import amp
 
-    train_dataset = TextDataset(config.dataset_path)
-    train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
+        elif config.accelerator == 'CPU':
+            device = torch.device("cpu")
 
-    model, tokenizer = MODEL_CLASSES[config.model]
+        train_dataset = TextDataset(config.dataset_path)
+        train_dataloader = torch.utils.data.DataLoader(
+            train_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
 
-    if config.model != 'test':
-        model = model.from_pretrained(config.checkpoint).to(device)
-    tokenizer = tokenizer.from_pretrained(config.checkpoint)
+        model, tokenizer = MODEL_CLASSES[config.model]
 
-    no_decay = ["bias", "LayerNorm.weight"]
-    optimizer_grouped_parameters = [
-        {"params": [p for n, p in model.named_parameters() if not any(
-            nd in n for nd in no_decay)], "weight_decay": 0.0},
-        {"params": [p for n, p in model.named_parameters() if any(
-            nd in n for nd in no_decay)], "weight_decay": 0.0},
-    ]
+        if config.model != 'test':
+            model = model.from_pretrained(config.checkpoint).to(device)
+        tokenizer = tokenizer.from_pretrained(config.checkpoint)
 
-    train_steps = int(len(train_dataloader) /
-                      config.gradient_accumulation_steps * config.epochs)
-    optimizer = AdamW(optimizer_grouped_parameters, lr=config.lr, eps=1e-8)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
-        0.1 * train_steps), num_training_steps=train_steps)
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {"params": [p for n, p in model.named_parameters() if not any(
+                nd in n for nd in no_decay)], "weight_decay": 0.0},
+            {"params": [p for n, p in model.named_parameters() if any(
+                nd in n for nd in no_decay)], "weight_decay": 0.0},
+        ]
 
-    if os.path.exists(config.checkpoint):
-        print('Loading optimizer and scheduler')
+        train_steps = int(len(train_dataloader) /
+                          config.gradient_accumulation_steps * config.epochs)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=config.lr, eps=1e-8)
+        scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
+            0.1 * train_steps), num_training_steps=train_steps)
 
-        optimizer.load_state_dict(torch.load(
-            os.path.join(config.checkpoint, 'optimizer.pt')))
-        scheduler.load_state_dict(torch.load(
-            os.path.join(config.checkpoint, 'scheduler.pt')))
+        if os.path.exists(config.checkpoint):
+            print('Loading optimizer and scheduler')
 
-    if config.accelerator == 'GPU':
-        model, optimizer = amp.initialize(
-            model, optimizer, opt_level="O1", loss_scale="dynamic")
+            optimizer.load_state_dict(torch.load(
+                os.path.join(config.checkpoint, 'optimizer.pt')))
+            scheduler.load_state_dict(torch.load(
+                os.path.join(config.checkpoint, 'scheduler.pt')))
 
-    wandb.watch(model, log='parameters')
+        if config.accelerator == 'GPU':
+            model, optimizer = amp.initialize(
+                model, optimizer, opt_level="O1", loss_scale="dynamic")
 
-    gradients = {}
+        wandb.watch(model, log='parameters')
 
-    global_step = 0
-    epochs_trained = 0
-    steps_trained_in_current_epoch = 0
-    if os.path.exists(config.checkpoint):
-        global_step = int(config.checkpoint.split('-')[-1].split('/')[0])
+        gradients = {}
 
-        epochs_trained = global_step // (len(train_dataloader) //
-                                         config.gradient_accumulation_steps)
-        steps_trained_in_current_epoch = global_step % (
-            len(train_dataloader) // config.gradient_accumulation_steps) * config.gradient_accumulation_steps
+        global_step = 0
+        epochs_trained = 0
+        steps_trained_in_current_epoch = 0
+        if os.path.exists(config.checkpoint):
+            global_step = int(config.checkpoint.split('-')[-1].split('/')[0])
 
-    for epoch in range(epochs_trained, config.epochs):
-        train_loss = 0
+            epochs_trained = global_step // (len(train_dataloader) //
+                                             config.gradient_accumulation_steps)
+            steps_trained_in_current_epoch = global_step % (
+                len(train_dataloader) // config.gradient_accumulation_steps) * config.gradient_accumulation_steps
 
-        print(f"Epoch: {epoch}")
+        for epoch in range(epochs_trained, config.epochs):
+            train_loss = 0
 
-        model.train()
-        for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / config.batch_size)):
-            if steps_trained_in_current_epoch > 0:
-                steps_trained_in_current_epoch -= 1
-                continue
+            print(f"Epoch: {epoch}")
 
-            inputs, labels = batch.to(device), batch.to(device)
+            model.train()
+            for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / config.batch_size)):
+                if steps_trained_in_current_epoch > 0:
+                    steps_trained_in_current_epoch -= 1
+                    continue
 
-            out = model(inputs, labels=labels)
-            loss = out[0]
+                inputs, labels = batch.to(device), batch.to(device)
 
-            loss = loss / config.gradient_accumulation_steps
+                out = model(inputs, labels=labels)
+                loss = out[0]
 
-            train_loss += loss.item()
+                loss = loss / config.gradient_accumulation_steps
 
-            if config.accelerator == 'GPU':
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                loss.backward()
+                train_loss += loss.item()
 
-            if (i + 1) % config.gradient_accumulation_steps == 0:
                 if config.accelerator == 'GPU':
-                    torch.nn.utils.clip_grad_norm_(
-                        amp.master_params(optimizer), 1)
+                    with amp.scale_loss(loss, optimizer) as scaled_loss:
+                        scaled_loss.backward()
                 else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                    loss.backward()
 
-                if config.accelerator == 'TPU':
-                    xm.optimizer_step(optimizer, barrier=True)
-                else:
-                    optimizer.step()
+                if (i + 1) % config.gradient_accumulation_steps == 0:
+                    if config.accelerator == 'GPU':
+                        torch.nn.utils.clip_grad_norm_(
+                            amp.master_params(optimizer), 1)
+                    else:
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
-                scheduler.step()
+                    if config.accelerator == 'TPU':
+                        xm.optimizer_step(optimizer, barrier=True)
+                    else:
+                        optimizer.step()
 
-                if global_step % config.logging_steps == 0:
-                    wandb.log({"train_loss": loss.item() * config.gradient_accumulation_steps,
-                               "learning_rate": scheduler.get_lr()[0]}, step=global_step)
+                    scheduler.step()
 
-                    if global_step % config.histogram_steps == 0:
-                        for name, param in model.named_parameters():
-                            if param.grad is not None:
-                                try:
-                                    gradients[f"gradients/{name}"] = wandb.Histogram(
-                                        param.grad.detach().cpu().numpy())
-                                except:
-                                    pass
+                    if global_step % config.logging_steps == 0:
+                        wandb.log({"train_loss": loss.item() * config.gradient_accumulation_steps,
+                                   "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
-                    wandb.log(gradients, step=global_step)
+                        if global_step % config.histogram_steps == 0:
+                            for name, param in model.named_parameters():
+                                if param.grad is not None:
+                                    try:
+                                        gradients[f"gradients/{name}"] = wandb.Histogram(
+                                            param.grad.detach().cpu().numpy())
+                                    except:
+                                        pass
 
-                optimizer.zero_grad()
+                        wandb.log(gradients, step=global_step)
 
-                global_step += 1
+                    optimizer.zero_grad()
 
-                # Must be in grad_accum block b/c if it is > 0, the model will get saved multiple times
-                if global_step % config.save_steps == 0:
-                    print(f'Saving model at global step: {global_step}')
-                    checkpoint_dir = os.path.join(
-                        config.save_dir, f'checkpoint-{global_step}')
+                    global_step += 1
 
-                    if not os.path.exists(checkpoint_dir):
-                        os.makedirs(checkpoint_dir)
+                    # Must be in grad_accum block b/c if it is > 0, the model will get saved multiple times
+                    if global_step % config.save_steps == 0:
+                        print(f'Saving model at global step: {global_step}')
+                        checkpoint_dir = os.path.join(
+                            config.save_dir, f'checkpoint-{global_step}')
 
-                    model.save_pretrained(checkpoint_dir)
-                    tokenizer.save_pretrained(checkpoint_dir)
-                    torch.save(optimizer.state_dict(), os.path.join(
-                        checkpoint_dir, 'optimizer.pt'))
-                    torch.save(scheduler.state_dict(), os.path.join(
-                        checkpoint_dir, 'scheduler.pt'))
+                        if not os.path.exists(checkpoint_dir):
+                            os.makedirs(checkpoint_dir)
 
-        train_loss /= (i + 1)
-        train_loss *= config.gradient_accumulation_steps
-        train_perplexity = torch.exp(torch.tensor(train_loss))
+                        model.save_pretrained(checkpoint_dir)
+                        tokenizer.save_pretrained(checkpoint_dir)
+                        torch.save(optimizer.state_dict(), os.path.join(
+                            checkpoint_dir, 'optimizer.pt'))
+                        torch.save(scheduler.state_dict(), os.path.join(
+                            checkpoint_dir, 'scheduler.pt'))
 
-        wandb.log({"train_epoch_loss": train_loss,
-                   "train_epoch_perplexity": train_perplexity}, step=global_step)
+            train_loss /= (i + 1)
+            train_loss *= config.gradient_accumulation_steps
+            train_perplexity = torch.exp(torch.tensor(train_loss))
 
-        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
-        print(message)
+            wandb.log({"train_epoch_loss": train_loss,
+                       "train_epoch_perplexity": train_perplexity}, step=global_step)
 
-        print('Sampling from model:\n')
-        sample(" ", model, tokenizer, length=config.sample_len, temperature=config.temperature,
-               top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty, num_samples=config.n_samples)
-        print('\n')
+            message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
+            print(message)
+
+            print('Sampling from model:\n')
+            sample(" ", model, tokenizer, length=config.sample_len, temperature=config.temperature,
+                   top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty, num_samples=config.n_samples)
+            print('\n')
+
+    print(prof)
 
 
 if __name__ == "__main__":
