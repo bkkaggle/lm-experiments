@@ -196,8 +196,6 @@ def finetune(**kwargs):
                top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty, n_samples=config.n_samples)
         print('\n')
 
-    print(prof)
-
 
 if __name__ == "__main__":
     fire.Fire(finetune)
