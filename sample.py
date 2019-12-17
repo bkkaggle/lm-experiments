@@ -7,20 +7,18 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# From: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py#L79
+# From: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py
 
 
-def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")):
+def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
     """ Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
         Args:
-            logits: logits distribution shape (vocabulary size)
+            logits: logits distribution shape (batch size x vocabulary size)
             top_k > 0: keep only top k tokens with highest probability (top-k filtering).
             top_p > 0.0: keep the top tokens with cumulative probability >= top_p (nucleus filtering).
                 Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
         From: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
     """
-    assert (logits.dim(
-    ) == 1)  # batch size 1 for now - could be updated for more but the code would be less clear
     top_k = min(top_k, logits.size(-1))  # Safety check
     if top_k > 0:
         # Remove all tokens with a probability less than the last token of the top-k
@@ -40,15 +38,19 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")
                                  1:] = sorted_indices_to_remove[..., :-1].clone()
         sorted_indices_to_remove[..., 0] = 0
 
-        indices_to_remove = sorted_indices[sorted_indices_to_remove]
+        # scatter sorted tensors to original indexing
+        indices_to_remove = sorted_indices_to_remove.scatter(
+            dim=1, index=sorted_indices, src=sorted_indices_to_remove)
         logits[indices_to_remove] = filter_value
     return logits
+
 
 # Parts from: https://github.com/huggingface/transformers/blob/master/examples/run_generation.py
 
 
-def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty):
-    next_token = torch.tensor(tokenizer.encode(prompt)).unsqueeze(0).to(device)
+def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty, n_samples=1):
+    next_token = torch.tensor(tokenizer.encode(prompt)).unsqueeze(
+        0).repeat(n_samples, 1).to(device)
     generated = next_token
 
     past = None
@@ -56,32 +58,37 @@ def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetiti
         for _ in tqdm(range(length)):
             logits, past = model(next_token, past=past)
 
-            logits = logits.view(-1)
+            # Get hidden state of next token only
+            logits = logits[:, -1, :]
+
             logits /= temperature if temperature > 0 else 1
 
             # Repetition penalty
-            for i in set(generated.view(-1).tolist()):
-                logits[i] /= repetition_penalty
+            for i in range(n_samples):
+                for j in set(generated[i].tolist()):
+                    logits[i, j] /= repetition_penalty
 
             # Top-k or top-p
             logits = top_k_top_p_filtering(logits, top_k=top_k, top_p=top_p)
 
             # Greedy sampling
             if temperature == 0:
-                next_token = torch.argmax(logits).unsqueeze(0)
+                next_token = torch.argmax(logits, dim=-1).unsqueeze(-1)
             # Top-k or top-p
             else:
                 next_token = torch.multinomial(torch.softmax(
                     logits.float(), dim=-1), num_samples=1)
 
-            generated = torch.cat([generated, next_token.view(1, 1)], dim=1)
+            generated = torch.cat([generated, next_token], dim=1)
 
-        out = tokenizer.decode(generated.view(-1).tolist())
+        print("Generated:\n")
+        samples = generated.tolist()
+        for i, sample in enumerate(samples):
+            sample = tokenizer.decode(sample)
+            print(f"Sample: {sample}")
 
-        return out
 
-
-def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2, debug=False):
+def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top_p=0, repetition_penalty=1.2, n_samples=1, debug=False):
     if debug:
         import ptvsd
 
@@ -98,8 +105,7 @@ def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top
             if prompt == None:
                 prompt = input("prompt > ")
             out = sample(prompt, model, tokenizer, length,
-                         temperature, top_k, top_p, repetition_penalty)
-            print(f"Generated: {out}")
+                         temperature, top_k, top_p, repetition_penalty, n_samples)
 
             if prompt != None:
                 break
