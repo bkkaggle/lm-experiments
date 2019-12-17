@@ -119,8 +119,7 @@ def finetune(**kwargs):
 
             inputs, labels = batch.to(device), batch.to(device)
 
-            with torch.autograd.profiler.profile(use_cuda=True, record_shapes=True) as prof:
-                out = model(inputs, labels=labels)
+            out = model(inputs, labels=labels)
             loss = out[0]
 
             loss = loss / config.gradient_accumulation_steps
