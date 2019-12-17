@@ -194,7 +194,7 @@ def finetune(**kwargs):
 
         print('Sampling from model:\n')
         sample(" ", model, tokenizer, length=config.sample_len, temperature=config.temperature,
-               top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty, num_samples=config.n_samples)
+               top_k=config.top_k, top_p=config.top_p, repetition_penalty=config.repetition_penalty, n_samples=config.n_samples)
         print('\n')
 
     print(prof)
