@@ -113,74 +113,74 @@ def finetune(**kwargs):
 
         model.train()
         for i, batch in tqdm(enumerate(train_dataloader), total=int(len(train_dataset) / config.batch_size)):
+            if steps_trained_in_current_epoch > 0:
+                steps_trained_in_current_epoch -= 1
+                continue
+
+            inputs, labels = batch.to(device), batch.to(device)
+
             with torch.autograd.profiler.profile(use_cuda=True, record_shapes=True) as prof:
-                if steps_trained_in_current_epoch > 0:
-                    steps_trained_in_current_epoch -= 1
-                    continue
-
-                inputs, labels = batch.to(device), batch.to(device)
-
                 out = model(inputs, labels=labels)
-                loss = out[0]
+            loss = out[0]
 
-                loss = loss / config.gradient_accumulation_steps
+            loss = loss / config.gradient_accumulation_steps
 
-                train_loss += loss.item()
+            train_loss += loss.item()
 
+            if config.accelerator == 'GPU':
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
+
+            if (i + 1) % config.gradient_accumulation_steps == 0:
                 if config.accelerator == 'GPU':
-                    with amp.scale_loss(loss, optimizer) as scaled_loss:
-                        scaled_loss.backward()
+                    torch.nn.utils.clip_grad_norm_(
+                        amp.master_params(optimizer), 1)
                 else:
-                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
-                if (i + 1) % config.gradient_accumulation_steps == 0:
-                    if config.accelerator == 'GPU':
-                        torch.nn.utils.clip_grad_norm_(
-                            amp.master_params(optimizer), 1)
-                    else:
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                if config.accelerator == 'TPU':
+                    xm.optimizer_step(optimizer, barrier=True)
+                else:
+                    optimizer.step()
 
-                    if config.accelerator == 'TPU':
-                        xm.optimizer_step(optimizer, barrier=True)
-                    else:
-                        optimizer.step()
+                scheduler.step()
 
-                    scheduler.step()
+                if global_step % config.logging_steps == 0:
+                    wandb.log({"train_loss": loss.item() * config.gradient_accumulation_steps,
+                               "learning_rate": scheduler.get_lr()[0]}, step=global_step)
 
-                    if global_step % config.logging_steps == 0:
-                        wandb.log({"train_loss": loss.item() * config.gradient_accumulation_steps,
-                                   "learning_rate": scheduler.get_lr()[0]}, step=global_step)
+                    if global_step % config.histogram_steps == 0:
+                        for name, param in model.named_parameters():
+                            if param.grad is not None:
+                                try:
+                                    gradients[f"gradients/{name}"] = wandb.Histogram(
+                                        param.grad.detach().cpu().numpy())
+                                except:
+                                    pass
 
-                        if global_step % config.histogram_steps == 0:
-                            for name, param in model.named_parameters():
-                                if param.grad is not None:
-                                    try:
-                                        gradients[f"gradients/{name}"] = wandb.Histogram(
-                                            param.grad.detach().cpu().numpy())
-                                    except:
-                                        pass
+                    wandb.log(gradients, step=global_step)
 
-                        wandb.log(gradients, step=global_step)
+                optimizer.zero_grad()
 
-                    optimizer.zero_grad()
+                global_step += 1
 
-                    global_step += 1
+                # Must be in grad_accum block b/c if it is > 0, the model will get saved multiple times
+                if global_step % config.save_steps == 0:
+                    print(f'Saving model at global step: {global_step}')
+                    checkpoint_dir = os.path.join(
+                        config.save_dir, f'checkpoint-{global_step}')
 
-                    # Must be in grad_accum block b/c if it is > 0, the model will get saved multiple times
-                    if global_step % config.save_steps == 0:
-                        print(f'Saving model at global step: {global_step}')
-                        checkpoint_dir = os.path.join(
-                            config.save_dir, f'checkpoint-{global_step}')
+                    if not os.path.exists(checkpoint_dir):
+                        os.makedirs(checkpoint_dir)
 
-                        if not os.path.exists(checkpoint_dir):
-                            os.makedirs(checkpoint_dir)
-
-                        model.save_pretrained(checkpoint_dir)
-                        tokenizer.save_pretrained(checkpoint_dir)
-                        torch.save(optimizer.state_dict(), os.path.join(
-                            checkpoint_dir, 'optimizer.pt'))
-                        torch.save(scheduler.state_dict(), os.path.join(
-                            checkpoint_dir, 'scheduler.pt'))
+                    model.save_pretrained(checkpoint_dir)
+                    tokenizer.save_pretrained(checkpoint_dir)
+                    torch.save(optimizer.state_dict(), os.path.join(
+                        checkpoint_dir, 'optimizer.pt'))
+                    torch.save(scheduler.state_dict(), os.path.join(
+                        checkpoint_dir, 'scheduler.pt'))
 
         train_loss /= (i + 1)
         train_loss *= config.gradient_accumulation_steps
