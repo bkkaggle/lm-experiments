@@ -29,7 +29,7 @@ MODEL_CLASSES = {
 }
 
 
-@profile
+# @profile
 def finetune(**kwargs):
 
     config = Config(**kwargs)
