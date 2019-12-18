@@ -45,6 +45,8 @@ def finetune(**kwargs):
 
     if config.accelerator == 'TPU':
         import torch_xla.core.xla_model as xm
+        import torch_xla.distributed.parallel_loader as pl
+
         device = xm.xla_device()
 
     elif config.accelerator == 'GPU':
@@ -59,6 +61,10 @@ def finetune(**kwargs):
     train_dataset = TextDataset(config.dataset_path)
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
+
+    if config.accelerator == 'TPU':
+        train_dataloader = pl.ParallelLoader(
+            train_dataloader, [device]).per_device_loader(device)
 
     model, tokenizer = MODEL_CLASSES[config.model]
 

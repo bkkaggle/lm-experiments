@@ -8,9 +8,8 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   profile code
--   multi gpu/machine training
 -   tpu training
+-   multi gpu/machine training
 -   pplm
 -   ctrl finetuning
 -   t5
@@ -30,6 +29,10 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   named tensors - too experimental for now
 -   batch generation
 -   hooks for activations - not worth it
+-   profile code
+
+    -   kernprof -l -v (file)
+    -   python -m line_profiler (file).lprof
 
 # Acknowledgements
 
