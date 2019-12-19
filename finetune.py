@@ -227,4 +227,4 @@ def main(dataset_path='./data.pkl', save_dir=None, model_type='gpt2', checkpoint
 
 
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire(main)
