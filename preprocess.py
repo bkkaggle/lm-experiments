@@ -10,12 +10,7 @@ from tqdm import tqdm
 
 import torch
 
-import wandb
 from transformers import GPT2Tokenizer, CTRLTokenizer
-
-from config import Config
-
-wandb.init(project="transformer-experiments")
 
 TOKENIZER_CLASSES = {
     'gpt2': GPT2Tokenizer,
@@ -34,7 +29,7 @@ def imdb(path, save_dir):
             f.write(review)
 
 
-def preprocess(dataset_path, model_type='gpt2', checkpoint='gpt2',  dataset_name=None, seq_len=256, control_code=None):
+def preprocess(dataset_path, model_type='gpt2', checkpoint='gpt2', dataset_name=None, seq_len=256, control_code=None):
     tokenizer = TOKENIZER_CLASSES[model_type].from_pretrained(
         checkpoint)
 

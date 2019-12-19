@@ -17,10 +17,7 @@ from dataset import TextDataset
 from model import DummyModel
 from sample import sample
 
-from config import Config
-
 import wandb
-wandb.init(project="transformer-experiments")
 
 MODEL_CLASSES = {
     'gpt2': (GPT2LMHeadModel, GPT2Tokenizer),
@@ -31,6 +28,11 @@ MODEL_CLASSES = {
 
 # @profile
 def finetune(dataset_path, save_dir=None, model_type='gpt2', checkpoint='distilgpt2', lr=5e-5, batch_size=4, gradient_accumulation_steps=1, epochs=1, accelerator='GPU', logging_steps=10, histogram_steps=100, save_steps=100, n_samples=1, sample_len=256, temperature=1, top_k=0, top_p=0, repetition_penalty=1, debug=False):
+
+    wandb.init(project="transformer-experiments")
+
+    if save_dir == None:
+        save_dir = wandb.run.dir
 
     if debug:
         import ptvsd
@@ -61,6 +63,11 @@ def finetune(dataset_path, save_dir=None, model_type='gpt2', checkpoint='distilg
         train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     if accelerator == 'TPU':
+        # from: https://github.com/pytorch/xla/issues/1191
+        def len_parallelloader(self):
+            return len(self._loader._loader)
+        pl.PerDeviceLoader.__len__ = len_parallelloader
+
         train_dataloader = pl.ParallelLoader(
             train_dataloader, [device]).per_device_loader(device)
 
