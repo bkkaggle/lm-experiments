@@ -62,14 +62,14 @@ def finetune(dataset_path, save_dir=None, model_type='gpt2', checkpoint='distilg
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
-    if accelerator == 'TPU':
-        # from: https://github.com/pytorch/xla/issues/1191
-        def len_parallelloader(self):
-            return len(self._loader._loader)
-        pl.PerDeviceLoader.__len__ = len_parallelloader
+    # if accelerator == 'TPU':
+    #     # from: https://github.com/pytorch/xla/issues/1191
+    #     def len_parallelloader(self):
+    #         return len(self._loader._loader)
+    #     pl.PerDeviceLoader.__len__ = len_parallelloader
 
-        train_dataloader = pl.ParallelLoader(
-            train_dataloader, [device]).per_device_loader(device)
+    #     train_dataloader = pl.ParallelLoader(
+    #         train_dataloader, [device]).per_device_loader(device)
 
     model, tokenizer = MODEL_CLASSES[model_type]
 
