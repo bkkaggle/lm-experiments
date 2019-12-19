@@ -34,14 +34,12 @@ def imdb(path, save_dir):
             f.write(review)
 
 
-def preprocess(**kwargs):
-    config = Config(**kwargs)
-
-    tokenizer = TOKENIZER_CLASSES[config.model].from_pretrained(
-        config.checkpoint)
+def preprocess(dataset_path, model_type='gpt2', checkpoint='gpt2',  dataset_name=None, seq_len=256, control_code=None):
+    tokenizer = TOKENIZER_CLASSES[model_type].from_pretrained(
+        checkpoint)
 
     batches = []
-    paths = glob.glob(f"{config.dataset_path}/*.txt")
+    paths = glob.glob(f"{dataset_path}/*.txt")
 
     for path in tqdm(paths, total=len(paths)):
         with open(path, encoding="utf-8") as file:
@@ -50,24 +48,24 @@ def preprocess(**kwargs):
         # Remove extra spaces that cause errors when tokenizing
         text = " ".join(text.split())
 
-        if config.checkpoint == 'gpt2':
+        if checkpoint == 'gpt2':
             text = "<|endoftext|> " + text
-        elif config.checkpoint == 'ctrl':
-            text = config.control_code + " " + text
+        elif checkpoint == 'ctrl':
+            text = control_code + " " + text
 
         tokenized_text = tokenizer.encode(text)
 
-        for i in range(0, len(tokenized_text) - config.seq_len + 1, config.seq_len):
-            batches.append(tokenized_text[i: i + config.seq_len])
+        for i in range(0, len(tokenized_text) - seq_len + 1, seq_len):
+            batches.append(tokenized_text[i: i + seq_len])
 
     random.shuffle(batches)
 
-    if config.control_code:
+    if control_code:
         save_file = os.path.join(
-            config.dataset_path, f'{config.dataset_name}-{config.checkpoint}-{config.control_code}.pkl')
+            dataset_path, f'{dataset_name}-{checkpoint}-{control_code}.pkl')
     else:
         save_file = os.path.join(
-            config.dataset_path, f'{config.dataset_name}-{config.checkpoint}.pkl')
+            dataset_path, f'{dataset_name}-{checkpoint}.pkl')
 
     with open(save_file, "wb") as handle:
         pickle.dump(batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
