@@ -49,6 +49,8 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
 
 
 def sample(prompt, model, tokenizer, length, temperature, top_k, top_p, repetition_penalty, n_samples=1):
+    model = model.to(device)
+
     next_token = torch.tensor(tokenizer.encode(prompt)).unsqueeze(
         0).repeat(n_samples, 1).to(device)
     generated = next_token
