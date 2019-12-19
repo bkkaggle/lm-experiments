@@ -8,6 +8,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
+-   use wandb init
 -   tpu training
 -   multi gpu/machine training
 -   pplm
@@ -33,6 +34,27 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
     -   kernprof -l -v (file)
     -   python -m line_profiler (file).lprof
+
+# Benchmarks
+
+## TPU Single core
+
+-   maximum batch size: 16
+-   by default, xla converts some layers to bfloat16 automatically
+-   takes a few batches to get up to speed
+-   it looks like the first training run in a session takes a lot longer
+-   training is **: `moby, distilgpt2, seq_len 256, AdamW, batch size 4, grad steps 1: **`
+-   more time is spent saving the model, so increase `save_steps`
+
+| model      | seq len | optimizer | batch size | grad steps | bfloat16  | time                     | batches/s                                |
+| ---------- | ------- | --------- | ---------- | ---------- | --------- | ------------------------ | ---------------------------------------- |
+| distilgpt2 | 256     | adamw     | 16         | 1          | automatic | 2m, but startup was 1.5m | 3, if you don't include the startup time |
+
+# GPU with apex 01
+
+-   maximum 2^n batch size: 16
+
+-   training is fast: `moby, distilgpt2, seq_len 256, AdamW, batch size 4, grad steps 4: 7.5 batches/second`
 
 # Acknowledgements
 
