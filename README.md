@@ -9,8 +9,8 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 # ToDo
 
 -   use wandb init
--   multi gpu/machine training
 -   pplm
+    -   distilgpt2
 -   ctrl finetuning
 -   t5
 
@@ -36,6 +36,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 -   tpu training
 -   https://github.com/pytorch-tpu
+-   multi gpu/machine training - later
 
 # Benchmarks
 
