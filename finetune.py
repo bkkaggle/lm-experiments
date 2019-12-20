@@ -151,7 +151,7 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gra
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
 
                 if accelerator == 'TPU':
-                    xm.optimizer_step(optimizer)  # , barrier=True)
+                    xm.optimizer_step(optimizer, barrier=True)
                 else:
                     optimizer.step()
 
