@@ -8,10 +8,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   https://github.com/pytorch-tpu
-
 -   use wandb init
--   tpu training
 -   multi gpu/machine training
 -   pplm
 -   ctrl finetuning
@@ -37,6 +34,9 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
     -   kernprof -l -v (file)
     -   python -m line_profiler (file).lprof
 
+-   tpu training
+-   https://github.com/pytorch-tpu
+
 # Benchmarks
 
 ## TPU Single core
@@ -47,6 +47,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   it looks like the first training run in a session takes a lot longer
 -   training is **: `moby, distilgpt2, seq_len 256, AdamW, batch size 4, grad steps 1: **`
 -   more time is spent saving the model, so increase `save_steps`
+-   mp doesn't work yet
 
 | model      | seq len | optimizer | batch size | grad steps | bfloat16  | time                     | batches/s                                |
 | ---------- | ------- | --------- | ---------- | ---------- | --------- | ------------------------ | ---------------------------------------- |
