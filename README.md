@@ -10,6 +10,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 -   use wandb init
 -   pplm
+    -   --colorama causes perturbed text to not show on colab
     -   distilgpt2
 -   ctrl finetuning
 -   t5
