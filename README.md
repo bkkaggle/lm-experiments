@@ -8,6 +8,8 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
+-   https://github.com/pytorch-tpu
+
 -   use wandb init
 -   tpu training
 -   multi gpu/machine training
