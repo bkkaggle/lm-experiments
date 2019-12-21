@@ -9,9 +9,6 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 # ToDo
 
 -   use wandb init
--   pplm
-    -   --colorama causes perturbed text to not show on colab
-    -   distilgpt2
 -   ctrl finetuning
 -   t5
 
@@ -38,6 +35,17 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   tpu training
 -   https://github.com/pytorch-tpu
 -   multi gpu/machine training - later
+-   pplm
+
+    -   --colorama causes perturbed text to not show on colab
+    -   distilgpt2
+    -   to use:
+        -   `python run_pplm.py -B military --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 3 --num_samples 1 --stepsize 0.03 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --sample`
+        -   `python run_pplm.py -D sentiment --class_label 2 --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 3 --num_samples 1 --stepsize 0.03 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --sample`
+        -   `python run_pplm.py -B ./data/pplm/sample-bow.txt --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 3 --num_samples 1 --stepsize 0.03 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --sample`
+        -   `python run_pplm_discrim_train.py --dataset SST --pretrained_model distilgpt2 --epochs 1 --log_interval 1000 --cached --save_model`
+        -   `python run_pplm_discrim_train.py --dataset generic --dataset_fp ./data.tsv --pretrained_model distilgpt2 --epochs 1 --log_interval 1000 --cached --save_model`
+        -   `python run_pplm.py -D generic --discrim_weights ./SST_classifier_head_epoch_1.pt --discrim_meta ./SST_classifier_head_meta.json --class_label 2 --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 3 --num_samples 1 --stepsize 0.03 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --sample`
 
 # Benchmarks
 
@@ -63,4 +71,4 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # Acknowledgements
 
-some code taken from huggingface/transformers
+some code taken from huggingface/transformers and https://github.com/uber-research/PPLM
