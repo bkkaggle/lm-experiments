@@ -8,6 +8,7 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.optim import SGD
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -27,7 +28,7 @@ MODEL_CLASSES = {
 
 
 # @profile
-def finetune(dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
+def finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
     wandb.init(project="transformer-experiments")
 
     if save_dir == None:
@@ -86,7 +87,12 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gra
 
     train_steps = int(len(train_dataloader) /
                       gradient_accumulation_steps * epochs)
-    optimizer = AdamW(optimizer_grouped_parameters, lr=lr, eps=1e-8)
+
+    if optimizer == 'AdamW':
+        optimizer = AdamW(optimizer_grouped_parameters, lr=lr, eps=1e-8)
+    elif optimizer == 'SGD':
+        optimizer = SGD(optimizer_grouped_parameters, lr=lr)
+
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(
         0.1 * train_steps), num_training_steps=train_steps)
 
@@ -208,13 +214,13 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gra
         print('\n')
 
 
-def tpu(index, dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
+def tpu(index, dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
     print(index)
     finetune(dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gradient_accumulation_steps, epochs, accelerator,
              logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug)
 
 
-def main(dataset_path='./data.pkl', save_dir=None, model_type='gpt2', checkpoint='distilgpt2', lr=5e-5, batch_size=4, gradient_accumulation_steps=1, epochs=1, accelerator='GPU', logging_steps=10, histogram_steps=100, save_steps=100, n_samples=1, sample_len=256, temperature=1, top_k=0, top_p=0, repetition_penalty=1, debug=False, n_cores=1):
+def main(dataset_path='./data.pkl', save_dir=None, model_type='gpt2', checkpoint='distilgpt2', optimizer='AdamW', lr=5e-5, batch_size=4, gradient_accumulation_steps=1, epochs=1, accelerator='GPU', logging_steps=10, histogram_steps=100, save_steps=100, n_samples=1, sample_len=256, temperature=1, top_k=0, top_p=0, repetition_penalty=1, debug=False, n_cores=1):
     if accelerator == 'CPU' or accelerator == 'GPU':
         finetune(dataset_path, save_dir, model_type, checkpoint, lr, batch_size, gradient_accumulation_steps, epochs, accelerator,
                  logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug)
