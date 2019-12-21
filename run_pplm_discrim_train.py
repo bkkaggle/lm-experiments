@@ -151,7 +151,7 @@ def train_epoch(data_loader, discriminator, optimizer,
                 epoch=0, log_interval=10, device='cpu'):
     samples_so_far = 0
     discriminator.train_custom()
-    for batch_idx, (input_t, target_t) in enumerate(data_loader):
+    for batch_idx, (input_t, target_t) in tqdm(enumerate(data_loader)):
         input_t, target_t = input_t.to(device), target_t.to(device)
 
         optimizer.zero_grad()
