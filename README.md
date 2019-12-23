@@ -9,7 +9,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 # ToDo
 
 -   t5 - docs are incomplete
--   hugginface cli
+-   huggingface cli
 
 # Done
 

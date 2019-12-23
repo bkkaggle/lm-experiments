@@ -18,7 +18,7 @@ TOKENIZER_CLASSES = {
 }
 
 
-def imdb(path, save_dir):
+def imdb(path, save_dir,  model_type='gpt2', control_code=None):
     imdb = pd.read_csv(path)
 
     reviews = imdb['review'].values
@@ -26,7 +26,30 @@ def imdb(path, save_dir):
 
     with open(os.path.join(save_dir, 'imdb.txt'), 'w') as f:
         for i, review in tqdm(enumerate(reviews), total=len(reviews)):
+
+            if model_type == 'gpt2':
+                review = "<|endoftext|> " + review
+            elif model_type == 'ctrl':
+                review = control_code + " " + review
+
             f.write(review)
+
+
+def all_the_news(path, save_dir, model_type='gpt2', control_code=None):
+    df = pd.read_csv(path)
+
+    articles = df['content'].values
+    print(f'There are {len(articles)} articles')
+
+    with open(os.path.join(save_dir, f'{model_type}.txt'), 'w') as f:
+        for i, article in tqdm(enumerate(articles), total=len(articles)):
+
+            if model_type == 'gpt2':
+                article = "<|endoftext|> " + article
+            elif model_type == 'ctrl':
+                article = control_code + " " + article
+
+            f.write(article)
 
 
 def preprocess(dataset_path, model_type='gpt2', checkpoint='gpt2', dataset_name=None, seq_len=256, control_code=None):
@@ -42,11 +65,6 @@ def preprocess(dataset_path, model_type='gpt2', checkpoint='gpt2', dataset_name=
 
         # Remove extra spaces that cause errors when tokenizing
         text = " ".join(text.split())
-
-        if checkpoint == 'gpt2':
-            text = "<|endoftext|> " + text
-        elif checkpoint == 'ctrl':
-            text = control_code + " " + text
 
         tokenized_text = tokenizer.encode(text)
 
