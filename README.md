@@ -8,12 +8,12 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   validation
 -   combine datasets
 
 ## Later
 
 -   t5 - docs are incomplete
+-   ctrl finetuning - need more ram
 -   huggingface cli
 
 # Done
@@ -52,7 +52,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
         -   `python run_pplm.py -D generic --discrim_weights ./SST_classifier_head_epoch_1.pt --discrim_meta ./SST_classifier_head_meta.json --class_label 2 --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 3 --num_samples 1 --stepsize 0.03 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --sample`
 
 -   use wandb init
--   ctrl finetuning - need more ram
+-   validation
 
 # Examples
 
