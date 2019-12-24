@@ -8,10 +8,13 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   t5 - docs are incomplete
--   huggingface cli
 -   validation
 -   combine datasets
+
+## Later
+
+-   t5 - docs are incomplete
+-   huggingface cli
 
 # Done
 

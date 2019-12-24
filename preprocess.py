@@ -74,40 +74,5 @@ def all_the_news(path, save_dir, model_type='gpt2', checkpoint='gpt2', dataset_n
         pickle.dump(test_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def preprocess(dataset_path, model_type='gpt2', checkpoint='gpt2', dataset_name=None, seq_len=256, train_split=0.9, control_code=None):
-    tokenizer = TOKENIZER_CLASSES[model_type].from_pretrained(
-        checkpoint)
-
-    batches = []
-    paths = glob.glob(f"{dataset_path}/*.txt")
-
-    for path in tqdm(paths, total=len(paths)):
-        with open(path, encoding="utf-8") as file:
-            text = file.read()
-
-        # Remove extra spaces that cause errors when tokenizing
-
-        tokenized_text = tokenizer.encode(text)
-
-        for i in range(0, len(tokenized_text) - seq_len + 1, seq_len):
-            batches.append(tokenized_text[i: i + seq_len])
-
-    random.shuffle(batches)
-
-    train_batches = batches[:int(len(batches) * train_split)]
-    test_batches = batches[int(len(batches) * train_split):]
-
-    if control_code:
-        prefix = f'{dataset_name}-{checkpoint}-{control_code}'
-    else:
-        prefix = f'{dataset_name}-{checkpoint}'
-
-    with open(os.path.join(dataset_path, f'{prefix}-train.pkl'), "wb") as handle:
-        pickle.dump(train_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    with open(os.path.join(dataset_path, f'{prefix}-test.pkl'), "wb") as handle:
-        pickle.dump(test_batches, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
 if __name__ == "__main__":
     fire.Fire()

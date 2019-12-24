@@ -28,7 +28,7 @@ MODEL_CLASSES = {
 
 
 # @profile
-def finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
+def finetune(train_dataset_path, val_dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
     wandb.init(project="transformer-experiments")
 
     if save_dir == None:
@@ -58,9 +58,13 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batc
     elif accelerator == 'CPU':
         device = torch.device("cpu")
 
-    train_dataset = TextDataset(dataset_path)
+    train_dataset = TextDataset(train_dataset_path)
+    val_dataset = TextDataset(val_dataset_path)
+
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+    val_dataloader = torch.utils.data.DataLoader(
+        val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     if accelerator == 'TPU':
         # from: https://github.com/pytorch/xla/issues/1191
@@ -125,6 +129,7 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batc
 
     for epoch in range(epochs_trained, epochs):
         train_loss = 0
+        val_loss = 0
 
         print(f"Epoch: {epoch}")
 
@@ -198,14 +203,28 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batc
                     torch.save(scheduler.state_dict(), os.path.join(
                         checkpoint_dir, 'scheduler.pt'))
 
+        model.eval()
+        with torch.no_grad():
+            for j, batch in tqdm(enumerate(val_dataloader), total=int(len(val_dataset) / batch_size)):
+                inputs, labels = batch.to(device), batch.to(device)
+
+                out = model(inputs, labels=labels)
+                loss = out[0]
+
+                val_loss += loss.item()
+
         train_loss /= (i + 1)
+        val_loss /= (j + 1)
+
         train_loss *= gradient_accumulation_steps
+
         train_perplexity = torch.exp(torch.tensor(train_loss))
+        val_perplexity = torch.exp(torch.tensor(val_loss))
 
         wandb.log({"train_epoch_loss": train_loss,
-                   "train_epoch_perplexity": train_perplexity}, step=global_step)
+                   "train_epoch_perplexity": train_perplexity, 'val_epoch_loss': val_loss, 'val_epoch_perplexity': val_perplexity}, step=global_step)
 
-        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity}'
+        message = f'Finished epoch {epoch} | Train loss: {train_loss} | Train perplexity: {train_perplexity} | Val Loss: {val_loss} | Val Perplexity: {val_perplexity}'
         print(message)
 
         print('Sampling from model:\n')
@@ -214,21 +233,21 @@ def finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batc
         print('\n')
 
 
-def tpu(index, dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
+def tpu(index, train_dataset_path, val_dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
     print(index)
-    finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator,
+    finetune(train_dataset_path, val_dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator,
              logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug)
 
 
-def main(dataset_path='./data.pkl', save_dir=None, model_type='gpt2', checkpoint='distilgpt2', optimizer='AdamW', lr=5e-5, batch_size=4, gradient_accumulation_steps=1, epochs=1, accelerator='GPU', logging_steps=10, histogram_steps=100, save_steps=100, n_samples=1, sample_len=256, temperature=1, top_k=0, top_p=0, repetition_penalty=1, debug=False, n_cores=1):
+def main(train_dataset_path=None, val_dataset_path=None, save_dir=None, model_type='gpt2', checkpoint='distilgpt2', optimizer='AdamW', lr=5e-5, batch_size=4, gradient_accumulation_steps=1, epochs=1, accelerator='GPU', logging_steps=10, histogram_steps=100, save_steps=100, n_samples=1, sample_len=256, temperature=1, top_k=0, top_p=0, repetition_penalty=1, debug=False, n_cores=1):
     if accelerator == 'CPU' or accelerator == 'GPU':
-        finetune(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator,
+        finetune(train_dataset_path, val_dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator,
                  logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug)
     else:
         import torch_xla.core.xla_model as xm
         import torch_xla.distributed.xla_multiprocessing as xmp
 
-        xmp.spawn(tpu, args=(dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps,
+        xmp.spawn(tpu, args=(train_dataset_path, val_dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps,
                              histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug), nprocs=n_cores)
 
 
