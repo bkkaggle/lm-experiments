@@ -10,6 +10,8 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 -   t5 - docs are incomplete
 -   huggingface cli
+-   validation
+-   combine datasets
 
 # Done
 
@@ -48,6 +50,13 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 -   use wandb init
 -   ctrl finetuning - need more ram
+
+# Examples
+
+## preprocessing all-the-news-subset dataset
+
+-   `python preprocess.py all_the_news --path ./data/all-the-news-subset/the_guardian/the_guardian.csv --save_dir ./data/all-the-news-subset/the_guardian --model_type gpt2`
+-   `python preprocess.py preprocess --dataset_path ./data/all-the-news-subset/the_guardian --model_type gpt2 --checkpoint distilgpt2 --dataset_name the_guardian`
 
 # Benchmarks
 
