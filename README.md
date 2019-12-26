@@ -8,8 +8,6 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   save model when training finishes
-
 ## Later
 
 -   t5 - docs are incomplete
@@ -55,6 +53,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 -   use wandb init
 -   validation
+-   save model when training finishes
 
 # Examples
 
