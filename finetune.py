@@ -232,6 +232,11 @@ def finetune(train_dataset_path, val_dataset_path, save_dir, model_type, checkpo
                top_k=top_k, top_p=top_p, repetition_penalty=repetition_penalty, n_samples=n_samples)
         print('\n')
 
+    model.save_pretrained(save_dir)
+    tokenizer.save_pretrained(save_dir)
+    torch.save(optimizer.state_dict(), os.path.join(save_dir, 'optimizer.pt'))
+    torch.save(scheduler.state_dict(), os.path.join(save_dir, 'scheduler.pt'))
+
 
 def tpu(index, train_dataset_path, val_dataset_path, save_dir, model_type, checkpoint, optimizer, lr, batch_size, gradient_accumulation_steps, epochs, accelerator, logging_steps, histogram_steps, save_steps, n_samples, sample_len, temperature, top_k, top_p, repetition_penalty, debug):
     print(index)

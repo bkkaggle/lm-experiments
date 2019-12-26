@@ -8,13 +8,15 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   combine datasets
+-   save model when training finishes
 
 ## Later
 
 -   t5 - docs are incomplete
 -   ctrl finetuning - need more ram
 -   huggingface cli
+-   pplm preprocessing - need clear-cut class labels
+-   combine datasets
 
 # Done
 
