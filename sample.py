@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 import torch
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -99,7 +99,7 @@ def main(checkpoint="gpt2", prompt=None, length=100, temperature=0, top_k=0, top
         ptvsd.wait_for_attach()
         breakpoint()
 
-    tokenizer = GPT2Tokenizer.from_pretrained(checkpoint)
+    tokenizer = GPT2TokenizerFast.from_pretrained(checkpoint)
     model = GPT2LMHeadModel.from_pretrained(checkpoint).to(device)
 
     while True:

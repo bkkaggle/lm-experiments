@@ -10,10 +10,10 @@ from tqdm import tqdm
 
 import torch
 
-from transformers import GPT2Tokenizer, CTRLTokenizer
+from transformers import GPT2TokenizerFast, CTRLTokenizer
 
 TOKENIZER_CLASSES = {
-    'gpt2': GPT2Tokenizer,
+    'gpt2': GPT2TokenizerFast,
     'ctrl': CTRLTokenizer
 }
 
