@@ -3,6 +3,7 @@ import random
 import fire
 import glob
 import pickle
+import time
 
 import numpy as np
 import pandas as pd
@@ -51,7 +52,10 @@ def all_the_news(path, save_dir, model_type='gpt2', checkpoint='gpt2', dataset_n
 
         articles = articles + " " + article
 
+    start = time.time()
     articles = tokenizer.encode(articles)
+    end = time.time()
+    print(f'Time to tokenize: {end - start} seconds')
 
     batches = []
     for i in range(0, len(articles) - seq_len + 1, seq_len):

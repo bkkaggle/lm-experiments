@@ -15,15 +15,13 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import GPT2LMHeadModel, CTRLLMHeadModel, GPT2TokenizerFast, CTRLTokenizer, AdamW, get_linear_schedule_with_warmup
 
 from dataset import TextDataset
-from model import DummyModel
 from sample import sample
 
 import wandb
 
 MODEL_CLASSES = {
     'gpt2': (GPT2LMHeadModel, GPT2TokenizerFast),
-    'ctrl': (CTRLLMHeadModel, CTRLTokenizer),
-    'test': (DummyModel(), GPT2TokenizerFast)
+    'ctrl': (CTRLLMHeadModel, CTRLTokenizer)
 }
 
 

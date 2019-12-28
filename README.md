@@ -8,6 +8,10 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
+-   on the fly tokenization - wait for rust tokenizer, or just use the current one
+    -   special tokens
+    -   update other files
+
 ## Later
 
 -   t5 - docs are incomplete
@@ -24,9 +28,6 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   save_steps
 -   saving and resuming
 -   use past
--   on the fly tokenization - wait for rust tokenizer, or just use the current one
-    -   special tokens
-    -   update other files
 -   distilgpt2
 -   named tensors - too experimental for now
 -   batch generation
