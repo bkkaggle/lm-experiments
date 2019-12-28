@@ -8,10 +8,6 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 
 # ToDo
 
--   on the fly tokenization - wait for rust tokenizer, or just use the current one
-    -   special tokens
-    -   update other files
-
 ## Later
 
 -   t5 - docs are incomplete
@@ -55,6 +51,9 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 -   use wandb init
 -   validation
 -   save model when training finishes
+-   on the fly tokenization - wait for rust tokenizer, or just use the current one - not worth it
+    -   special tokens
+    -   update other files
 
 # Examples
 
