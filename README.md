@@ -9,6 +9,7 @@ IMDB dataset from: https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-mo
 # ToDo
 
 - update optimizer code to work like: https://github.com/huggingface/transformers#optimizers-bertadam--openaiadam-are-now-adamw-schedules-are-standard-pytorch-schedules
+- replace lineprofiler with scalene https://github.com/emeryberger/scalene
 
 ## Later
 
